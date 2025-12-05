@@ -372,7 +372,8 @@
         const tAction = document.createElement('td');
         const voteBtn = document.createElement('button');
         voteBtn.textContent = 'Vote';
-        voteBtn.className = 'vote-btn';
+        // Updated to match site button style:
+        voteBtn.className = 'nav-bar-btn';
         voteBtn.disabled = getVotesLeft() <= 0;
         voteBtn.addEventListener('click', async function() {
           if (getVotesLeft() <= 0) return;
