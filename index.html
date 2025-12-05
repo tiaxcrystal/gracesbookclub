@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grace's Book Club</title>
+  <style>
+    /* Body styles */
+    body {
+      margin: 0;
+      font-family: 'Times New Roman', serif;
+      background-color: white;
+      color: #4c1033;
+    }
+
+    /* Navigation bar */
+    .custom-nav {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      background-color: white;
+      padding: 10px 5px;
+      flex-wrap: wrap; /* wrap on small screens */
+      box-sizing: border-box;
+      width: 100%;
+      border-bottom: 1px solid #eec2cd;
+      position: sticky; /* keeps nav visible on scroll */
+      top: 0;
+      z-index: 100;
+    }
+
+    /* Nav buttons */
+    .nav-button {
+      background-color: #eec2cd;
+      color: black;
+      text-decoration: none;
+      padding: 10px 25px;
+      min-width: 160px;
+      text-align: center;
+      border-radius: 6px;
+      font-weight: normal;
+      display: inline-block;
+      box-sizing: border-box;
+      transition: background-color 0.2s ease;
+    }
+
+    .nav-button:hover {
+      background-color: #f5c8d1;
+    }
+
+    /* Section headings */
+    h2 {
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    /* Form container */
+    .form-container {
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .form-container iframe {
+      width: 100%;
+      max-width: 600px; /* keeps it readable on large screens */
+      height: 600px; /* adjust as needed per form */
+      border: 1px solid #eec2cd;
+      border-radius: 6px;
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 600px) {
+      .nav-button {
+        min-width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+      .form-container iframe {
+        height: 800px; /* taller on mobile to reduce scrolling inside iframe */
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <div class="custom-nav">
+    <a href="#rsvp" class="nav-button">RSVP</a>
+    <a href="#suggestvote" class="nav-button">Suggest & Vote</a>
+    <a href="#ratebooks" class="nav-button">Rate Our Books</a>
+  </div>
+
+  <!-- RSVP Form -->
+  <h2 id="rsvp">RSVP</h2>
+  <div class="form-container">
+    <iframe src="https://script.google.com/macros/s/AKfycbyFhLr_XJil4ceT-E3KNt54AYFwB3XRsOFxRsQfXIfqvyh1ibGXmfoPdXoddj-cHPVI/exec" frameborder="0" scrolling="auto"></iframe>
+  </div>
+
+  <!-- Suggest & Vote Form -->
+  <h2 id="suggestvote">Suggest & Vote</h2>
+  <div class="form-container">
+    <iframe src="https://script.google.com/macros/s/AKfycby7te0c35e_aNZVOJ2-kRuD3JlR4bZMfT3c1If3SEZ243G6kLCJu__d6aoAoRrkFSaDcw/exec" frameborder="0" scrolling="auto"></iframe>
+  </div>
+
+  <!-- Rate Our Books Form -->
+  <h2 id="ratebooks">Rate Our Books</h2>
+  <div class="form-container">
+    <iframe src="https://script.google.com/macros/s/AKfycbwjeQlI3uCKx9LcdCbnexxk2l8DMvVqEHbGjaLi2D1iD8O65Z_uIfUtzQ5dBuLmNqmO/exec" frameborder="0" scrolling="auto"></iframe>
+  </div>
+
+</body>
+</html>
