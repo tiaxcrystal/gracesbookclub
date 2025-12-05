@@ -260,26 +260,26 @@
     </table>
   </div>
 </div>
-
 <script>
-/* =======================
-      Navigation
-======================= */
-const navButtons = document.querySelectorAll('.nav-bar button');
-const containers = document.querySelectorAll('.container');
+document.addEventListener('DOMContentLoaded', () => {
 
-navButtons.forEach(btn => {
-  btn.addEventListener('click', () => {
-    const target = btn.getAttribute('data-target');
-    containers.forEach(c => c.classList.remove('active'));
-    document.getElementById(target).classList.add('active');
+  /* =======================
+     Navigation: switch active container
+  ======================= */
+  const navButtons = document.querySelectorAll('.nav-bar button');
+  const containers = document.querySelectorAll('.container');
+
+  navButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.getAttribute('data-target');
+      containers.forEach(c => c.classList.remove('active'));
+      document.getElementById(target).classList.add('active');
+    });
   });
-});
 
-/* =======================
-       RSVP Form
-======================= */
-(() => {
+  /* =======================
+         RSVP Form
+  ======================= */
   const rsvpForm = document.getElementById('rsvpForm');
   const rsvpTableBody = document.querySelector('#rsvp-table tbody');
   const meetingDate = document.getElementById('meeting-date');
@@ -287,8 +287,13 @@ navButtons.forEach(btn => {
 
   async function loadRSVPs() {
     try {
-      const data = await fetch('/.netlify/functions/getRSVPs').then(r => r.json());
+      const data = await fetch('/.netlify/functions/getRSVPs').then(r=>r.json());
+      console.log('RSVPs data:', data);
       rsvpTableBody.innerHTML = '';
+      if (!data || !data.length) {
+        rsvpTableBody.innerHTML = '<tr><td colspan="2">No RSVPs yet.</td></tr>';
+        return;
+      }
       data.reverse().forEach(entry => {
         const row = document.createElement('tr');
         const nameCell = document.createElement('td'); nameCell.textContent = entry.name;
@@ -296,42 +301,48 @@ navButtons.forEach(btn => {
         row.appendChild(nameCell); row.appendChild(bringingCell);
         rsvpTableBody.appendChild(row);
       });
-    } catch (e) { console.error('Error loading RSVPs:', e); }
+    } catch(e) { 
+      console.error('Error loading RSVPs:', e);
+      rsvpTableBody.innerHTML = '<tr><td colspan="2">Error loading RSVPs.</td></tr>';
+    }
   }
 
   async function loadMeetingInfo() {
     try {
-      const info = await fetch('/.netlify/functions/getMeetingInfo').then(r => r.json());
-      meetingDate.textContent = `Date: ${info.date}`;
-      meetingTheme.textContent = `Theme: ${info.theme}`;
-    } catch (e) { console.error('Error loading meeting info:', e); }
+      const info = await fetch('/.netlify/functions/getMeetingInfo').then(r=>r.json());
+      console.log('Meeting info:', info);
+      meetingDate.textContent = `Date: ${info.date || 'TBD'}`;
+      meetingTheme.textContent = `Theme: ${info.theme || 'TBD'}`;
+    } catch(e) { 
+      console.error('Error loading meeting info:', e);
+      meetingDate.textContent = 'Date: Error';
+      meetingTheme.textContent = 'Theme: Error';
+    }
   }
 
-  rsvpForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const name = rsvpForm.name.value.trim();
-    const bringing = rsvpForm.bringing.value.trim();
-    if (!name || !bringing) return;
-    try {
-      await fetch('/.netlify/functions/addRSVP', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, bringing })
-      });
-      rsvpForm.reset();
-      loadRSVPs();
-    } catch (e) { console.error('Error adding RSVP:', e); }
-  });
-
-  loadRSVPs();
+  loadRSVPs(); 
   loadMeetingInfo();
   setInterval(() => { loadRSVPs(); loadMeetingInfo(); }, 5000);
-})();
 
-/* =======================
+  rsvpForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const name = this.name.value.trim();
+    const bringing = this.bringing.value.trim();
+    if(!name || !bringing) return;
+    try {
+      await fetch('/.netlify/functions/addRSVP', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({name, bringing})
+      });
+      this.reset();
+      loadRSVPs();
+    } catch(e) { console.error('Error submitting RSVP:', e); }
+  });
+
+  /* =======================
      Suggest & Vote Form
-======================= */
-(() => {
+  ======================= */
   const nomForm = document.getElementById('nomForm');
   const nomStatus = document.getElementById('nomStatus');
   const nomsBody = document.querySelector('#nomsTable tbody');
@@ -351,20 +362,29 @@ navButtons.forEach(btn => {
   updateVotesLeftDisplay();
 
   function validUrl(u) {
-    try { const url = new URL(u); return url.protocol === 'http:' || url.protocol === 'https:'; }
-    catch (e) { return false; }
+    try { 
+      const url = new URL(u); 
+      return url.protocol === 'http:' || url.protocol === 'https:'; 
+    } catch (e) { 
+      return false; 
+    }
   }
 
   async function loadNoms() {
     try {
       const data = await fetch('/.netlify/functions/getNominations').then(r => r.json());
+      console.log('Nominations data:', data);
       nomsBody.innerHTML = '';
-      data.forEach((item) => {
+      if (!data || !data.length) {
+        nomsBody.innerHTML = '<tr><td colspan="5">No nominations yet.</td></tr>';
+        return;
+      }
+      data.forEach(item => {
         const tr = document.createElement('tr');
 
         const tTitle = document.createElement('td');
         const a = document.createElement('a');
-        a.href = item.link;
+        a.href = item.link || '#';
         a.target = '_blank';
         a.rel = 'noopener';
         a.textContent = item.title || '';
@@ -377,32 +397,40 @@ navButtons.forEach(btn => {
         const tAction = document.createElement('td');
         const voteBtn = document.createElement('button');
         voteBtn.textContent = 'Vote';
+        voteBtn.className = 'vote-btn';
         voteBtn.disabled = getVotesLeft() <= 0;
-        voteBtn.addEventListener('click', async () => {
+        voteBtn.addEventListener('click', async function() {
           if (getVotesLeft() <= 0) return;
           try {
             await fetch('/.netlify/functions/addVote', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ title: item.title })
+              method:'POST',
+              headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({title: item.title})
             });
-            const current = parseInt(sessionStorage.getItem('votesCast') || '0', 10);
+            const current = parseInt(sessionStorage.getItem('votesCast') || '0',10);
             sessionStorage.setItem('votesCast', (current + 1).toString());
             updateVotesLeftDisplay();
             loadNoms();
-          } catch (e) { alert('Error: Could not register vote.'); console.error(e); }
+          } catch(e) { 
+            alert('Error: Could not register vote.');
+            console.error('Vote error:', e);
+          }
         });
         tAction.appendChild(voteBtn);
 
         tr.appendChild(tTitle); tr.appendChild(tAuthor); tr.appendChild(tGenre); tr.appendChild(tVotes); tr.appendChild(tAction);
         nomsBody.appendChild(tr);
       });
-    } catch (e) { console.error('Error loading nominations:', e); }
+    } catch(e) { 
+      console.error('Error loading nominations:', e);
+      nomsBody.innerHTML = '<tr><td colspan="5">Error loading nominations.</td></tr>';
+    }
   }
+
   loadNoms();
   setInterval(loadNoms, 5000);
 
-  nomForm.addEventListener('submit', async (e) => {
+  nomForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     nomStatus.textContent = '';
     nomStatus.classList.remove('error');
@@ -431,87 +459,105 @@ navButtons.forEach(btn => {
 
     try {
       await fetch('/.netlify/functions/submitNomination', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, author, genre, link })
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({title, author, genre, link})
       });
       nomStatus.textContent = 'Thanks — nomination added!';
       nomStatus.style.color = '#4c1033';
       nomForm.reset();
       loadNoms();
-    } catch (e) {
+    } catch(e) {
       nomStatus.textContent = 'Error: Could not add nomination.';
       nomStatus.classList.add('error');
-      console.error(e);
+      console.error('Submit nomination error:', e);
     } finally { submitBtn.disabled = false; }
   });
-})();
 
-/* =======================
-      Rate Our Books
-======================= */
-(() => {
+  /* =======================
+     Rate Our Books
+  ======================= */
   const bookSelect = document.getElementById('book');
   const statusDiv = document.getElementById('status');
   const avgTableBody = document.querySelector('#averages tbody');
 
   async function populateBooks() {
     try {
-      const books = await fetch('/.netlify/functions/getBookList').then(r => r.json());
-      books.forEach(book => {
+      const books = await fetch('/.netlify/functions/getBookList').then(r=>r.json());
+      console.log('Books list:', books);
+      bookSelect.innerHTML = '';
+      if (!books || !books.length) {
         const option = document.createElement('option');
-        option.value = book;
-        option.text = book;
+        option.text = 'No books available';
+        option.disabled = true;
         bookSelect.add(option);
+        avgTableBody.innerHTML = '<tr><td colspan="3">No ratings available.</td></tr>';
+        return;
+      }
+      books.forEach(book => { 
+        const option = document.createElement('option'); 
+        option.value=book; 
+        option.text=book; 
+        bookSelect.add(option); 
       });
       refreshAverages();
-    } catch (e) { console.error('Error populating books:', e); }
+    } catch(e){
+      console.error('Error populating books:', e);
+      avgTableBody.innerHTML = '<tr><td colspan="3">Error loading books.</td></tr>';
+    }
   }
 
   async function refreshAverages() {
     try {
-      const averages = await fetch('/.netlify/functions/getAverages').then(r => r.json());
-      avgTableBody.innerHTML = '';
-      averages.sort((a, b) => b.avg - a.avg);
-      averages.forEach(item => {
+      const averages = await fetch('/.netlify/functions/getAverages').then(r=>r.json());
+      console.log('Averages data:', averages);
+      avgTableBody.innerHTML='';
+      if (!averages || !averages.length) {
+        avgTableBody.innerHTML = '<tr><td colspan="3">No ratings yet.</td></tr>';
+        return;
+      }
+      averages.sort((a,b)=>b.avg-a.avg);
+      averages.forEach(item=>{
         const row = document.createElement('tr');
-        const bookCell = document.createElement('td'); bookCell.textContent = item.book;
-        const avgCell = document.createElement('td'); avgCell.innerHTML = '⭐'.repeat(Math.round(item.avg));
-        const countCell = document.createElement('td'); countCell.textContent = item.count;
+        const bookCell=document.createElement('td'); bookCell.textContent=item.book;
+        const avgCell=document.createElement('td'); avgCell.innerHTML='⭐'.repeat(Math.round(item.avg));
+        const countCell=document.createElement('td'); countCell.textContent=item.count;
         row.appendChild(bookCell); row.appendChild(avgCell); row.appendChild(countCell);
         avgTableBody.appendChild(row);
       });
-    } catch (e) { console.error('Error refreshing averages:', e); }
+    } catch(e){ 
+      console.error('Error refreshing averages:', e);
+      avgTableBody.innerHTML = '<tr><td colspan="3">Error loading ratings.</td></tr>';
+    }
   }
 
   populateBooks();
 
-  document.getElementById('ratingForm').addEventListener('submit', async (e) => {
+  document.getElementById('ratingForm').addEventListener('submit', async e=>{
     e.preventDefault();
     const rating = document.querySelector('input[name="rating"]:checked')?.value;
     const book = bookSelect.value;
-    if (!rating) { statusDiv.innerText = "Please select a star rating!"; statusDiv.style.color = "red"; return; }
-    statusDiv.innerText = "Submitting rating…"; statusDiv.style.color = "#4c1033";
-    try {
-      await fetch('/.netlify/functions/submitRating', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ book, rating })
+    if(!rating){ statusDiv.innerText="Please select a star rating!"; statusDiv.style.color="red"; return; }
+    statusDiv.innerText="Submitting rating…"; statusDiv.style.color="#4c1033";
+    try{
+      await fetch('/.netlify/functions/submitRating',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({book, rating})
       });
-      statusDiv.innerText = "Rating submitted!";
-      statusDiv.style.color = "green";
-      document.querySelectorAll('input[name="rating"]').forEach(input => input.checked = false);
+      statusDiv.innerText="Rating submitted!";
+      statusDiv.style.color="green";
+      document.querySelectorAll('input[name="rating"]').forEach(input=>input.checked=false);
       refreshAverages();
-    } catch (e) {
-      statusDiv.innerText = "Error submitting rating!";
-      statusDiv.style.color = "red";
-      console.error(e);
+    } catch(e){
+      statusDiv.innerText="Error submitting rating!";
+      statusDiv.style.color="red";
+      console.error('Submit rating error:', e);
     }
   });
-})();
+
+});
 </script>
-
-
 
 </body>
 </html>
