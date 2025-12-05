@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Grace's Book Club</title>
   <style>
-    /* Body styles */
     body {
       margin: 0;
       font-family: 'Times New Roman', serif;
@@ -13,23 +12,21 @@
       color: #4c1033;
     }
 
-    /* Navigation bar */
     .custom-nav {
       display: flex;
       justify-content: center;
       gap: 15px;
       background-color: white;
       padding: 10px 5px;
-      flex-wrap: wrap; /* wrap on small screens */
+      flex-wrap: wrap;
       box-sizing: border-box;
       width: 100%;
       border-bottom: 1px solid #eec2cd;
-      position: sticky; /* keeps nav visible on scroll */
+      position: sticky;
       top: 0;
       z-index: 100;
     }
 
-    /* Nav buttons */
     .nav-button {
       background-color: #eec2cd;
       color: black;
@@ -48,36 +45,67 @@
       background-color: #f5c8d1;
     }
 
-    /* Section headings */
     h2 {
       text-align: center;
       margin-top: 40px;
     }
 
-    /* Form container */
     .form-container {
       display: flex;
       justify-content: center;
       padding: 20px;
     }
 
-    .form-container iframe {
+    form {
       width: 100%;
-      max-width: 600px; /* keeps it readable on large screens */
-      height: 600px; /* adjust as needed per form */
-      border: 1px solid #eec2cd;
-      border-radius: 6px;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
     }
 
-    /* Mobile adjustments */
+    input[type="text"], input[type="email"], select, textarea {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-family: 'Times New Roman', serif;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    input[type="submit"] {
+      background-color: #eec2cd;
+      color: black;
+      padding: 10px 25px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Times New Roman', serif;
+      font-size: 16px;
+      transition: background-color 0.2s ease;
+    }
+
+    input[type="submit"]:hover {
+      background-color: #f5c8d1;
+    }
+
+    .success-message {
+      color: green;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .error-message {
+      color: red;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
     @media (max-width: 600px) {
       .nav-button {
         min-width: 100%;
         padding: 10px;
         margin-bottom: 10px;
-      }
-      .form-container iframe {
-        height: 800px; /* taller on mobile to reduce scrolling inside iframe */
       }
     }
   </style>
@@ -94,20 +122,87 @@
   <!-- RSVP Form -->
   <h2 id="rsvp">RSVP</h2>
   <div class="form-container">
-    <iframe src="https://script.google.com/macros/s/AKfycbyFhLr_XJil4ceT-E3KNt54AYFwB3XRsOFxRsQfXIfqvyh1ibGXmfoPdXoddj-cHPVI/exec" frameborder="0" scrolling="auto"></iframe>
+    <form id="rsvpForm" action="https://script.google.com/macros/s/AKfycbyFhLr_XJil4ceT-E3KNt54AYFwB3XRsOFxRsQfXIfqvyh1ibGXmfoPdXoddj-cHPVI/exec" method="POST">
+      <input type="text" name="name" placeholder="Your Name" required>
+      <input type="email" name="email" placeholder="Your Email" required>
+      <input type="text" name="guests" placeholder="Number of Guests" required>
+      <input type="submit" value="Submit RSVP">
+      <div class="success-message" style="display:none;"></div>
+      <div class="error-message" style="display:none;"></div>
+    </form>
   </div>
 
   <!-- Suggest & Vote Form -->
   <h2 id="suggestvote">Suggest & Vote</h2>
   <div class="form-container">
-    <iframe src="https://script.google.com/macros/s/AKfycby7te0c35e_aNZVOJ2-kRuD3JlR4bZMfT3c1If3SEZ243G6kLCJu__d6aoAoRrkFSaDcw/exec" frameborder="0" scrolling="auto"></iframe>
+    <form id="suggestForm" action="https://script.google.com/macros/s/AKfycby7te0c35e_aNZVOJ2-kRuD3JlR4bZMfT3c1If3SEZ243G6kLCJu__d6aoAoRrkFSaDcw/exec" method="POST">
+      <input type="text" name="book" placeholder="Book Suggestion" required>
+      <textarea name="reason" placeholder="Why you like it" rows="4"></textarea>
+      <input type="submit" value="Submit Suggestion">
+      <div class="success-message" style="display:none;"></div>
+      <div class="error-message" style="display:none;"></div>
+    </form>
   </div>
 
   <!-- Rate Our Books Form -->
   <h2 id="ratebooks">Rate Our Books</h2>
   <div class="form-container">
-    <iframe src="https://script.google.com/macros/s/AKfycbwjeQlI3uCKx9LcdCbnexxk2l8DMvVqEHbGjaLi2D1iD8O65Z_uIfUtzQ5dBuLmNqmO/exec" frameborder="0" scrolling="auto"></iframe>
+    <form id="rateForm" action="https://script.google.com/macros/s/AKfycbwjeQlI3uCKx9LcdCbnexxk2l8DMvVqEHbGjaLi2D1iD8O65Z_uIfUtzQ5dBuLmNqmO/exec" method="POST">
+      <input type="text" name="book" placeholder="Book Title" required>
+      <select name="rating" required>
+        <option value="">Select Rating</option>
+        <option value="1">1 - Poor</option>
+        <option value="2">2 - Fair</option>
+        <option value="3">3 - Good</option>
+        <option value="4">4 - Very Good</option>
+        <option value="5">5 - Excellent</option>
+      </select>
+      <textarea name="review" placeholder="Optional Review" rows="4"></textarea>
+      <input type="submit" value="Submit Rating">
+      <div class="success-message" style="display:none;"></div>
+      <div class="error-message" style="display:none;"></div>
+    </form>
   </div>
+
+  <script>
+    // Helper function to handle AJAX submission
+    function handleFormSubmit(formId) {
+      const form = document.getElementById(formId);
+      const successMsg = form.querySelector('.success-message');
+      const errorMsg = form.querySelector('.error-message');
+
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        successMsg.style.display = 'none';
+        errorMsg.style.display = 'none';
+
+        const data = new FormData(form);
+
+        fetch(form.action, {
+          method: 'POST',
+          body: data,
+        })
+        .then(response => {
+          if (response.ok) {
+            successMsg.textContent = 'Form submitted successfully!';
+            successMsg.style.display = 'block';
+            form.reset();
+          } else {
+            throw new Error('Submission failed');
+          }
+        })
+        .catch(error => {
+          errorMsg.textContent = 'Error submitting form. Please try again.';
+          errorMsg.style.display = 'block';
+        });
+      });
+    }
+
+    // Apply AJAX submission to all three forms
+    handleFormSubmit('rsvpForm');
+    handleFormSubmit('suggestForm');
+    handleFormSubmit('rateForm');
+  </script>
 
 </body>
 </html>
