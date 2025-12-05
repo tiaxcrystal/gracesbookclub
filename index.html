@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Grace's Book Club</title>
-  <link rel="stylesheet" href="style.css">
   <style>
     body {
       font-family: "Times New Roman", serif;
@@ -35,10 +34,11 @@
       background: #f4d1da;
     }
 
+    /* Form styling */
     form {
-      max-width: 400px;
-      margin: 20px auto;
-      padding: 15px;
+      max-width: 500px;
+      margin: 30px auto;
+      padding: 20px;
       background: #ffffff;
       border: 1px solid #eec2cd;
       border-radius: 5px;
@@ -81,9 +81,11 @@
   <form id="rsvpForm">
     <h2>RSVP</h2>
     <input type="hidden" name="formType" value="rsvp">
-    <input type="text" name="name" placeholder="Name" required>
-    <input type="email" name="email" placeholder="Email" required>
-    <button type="submit">Submit</button>
+    <input type="text" name="name" placeholder="Full Name" required>
+    <input type="email" name="email" placeholder="Email Address" required>
+    <input type="text" name="guests" placeholder="Number of Guests" required>
+    <textarea name="comments" placeholder="Any comments?" rows="3"></textarea>
+    <button type="submit">Submit RSVP</button>
   </form>
 
   <!-- Suggest & Vote Form -->
@@ -91,14 +93,15 @@
     <h2>Suggest & Vote</h2>
     <input type="hidden" name="formType" value="suggest">
     <input type="text" name="suggestion" placeholder="Book suggestion" required>
-    <button type="submit">Submit</button>
+    <textarea name="reason" placeholder="Why this book?" rows="3"></textarea>
+    <button type="submit">Submit Suggestion</button>
   </form>
 
   <!-- Rate Our Books Form -->
   <form id="rateForm">
     <h2>Rate Our Books</h2>
     <input type="hidden" name="formType" value="rate">
-    <input type="text" name="book" placeholder="Book name" required>
+    <input type="text" name="book" placeholder="Book Name" required>
     <select name="rating" required>
       <option value="">Select rating</option>
       <option value="1">1 ⭐</option>
@@ -107,9 +110,11 @@
       <option value="4">4 ⭐</option>
       <option value="5">5 ⭐</option>
     </select>
-    <button type="submit">Submit</button>
+    <textarea name="feedback" placeholder="Comments about the book" rows="3"></textarea>
+    <button type="submit">Submit Rating</button>
   </form>
 
+  <!-- JS for form submission -->
   <script>
     async function handleFormSubmit(form) {
       const formData = new FormData(form);
