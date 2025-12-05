@@ -3,10 +3,10 @@
   publish = "/"
 
 [build.environment]
-  GOOGLE_SERVICE_ACCOUNT = "your-JSON-service-account-here" # DON'T paste in code, set in Netlify UI instead
-  RSVP_SPREADSHEET_ID = "your_RSVP_sheet_id"
-  RATE_SPREADSHEET_ID = "your_rate_sheet_id"
-  SUGGEST_SPREADSHEET_ID = "your_suggest_sheet_id"
+  GOOGLE_SERVICE_ACCOUNT = "" 
+  RSVP_SPREADSHEET_ID = "1ojGEBABMUB0-p1vKd0er03PbapHd3ZXWB3KlyrkowmY"
+  RATE_SPREADSHEET_ID = "1-86BOIuWOeINJVJkNojHo-c1T3Ygxm1AgLyedEplgvY"
+  SUGGEST_SPREADSHEET_ID = "1WFoa1y-byiCyWb09xKifph6Nzs_9iSCx05fgR9edUbE"
 
 [functions]
   directory = "netlify/functions"
