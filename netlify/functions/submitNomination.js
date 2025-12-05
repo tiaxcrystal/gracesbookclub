@@ -1,19 +1,18 @@
-import { google } from 'googleapis';
+const { google } = require('googleapis');
 
-// Read service account credentials from environment
 const creds = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
 
-// Google Sheets setup
-const sheets = google.sheets({ version: 'v4', auth: new google.auth.GoogleAuth({
+const auth = new google.auth.GoogleAuth({
   credentials: creds,
   scopes: ['https://www.googleapis.com/auth/spreadsheets']
-}) });
+});
 
-// Spreadsheet info
+const sheets = google.sheets({ version: 'v4', auth });
+
 const SPREADSHEET_ID = '1WFoa1y-byiCyWb09xKifph6Nzs_9iSCx05fgR9edUbE';
 const SHEET_NAME = 'Suggested Book List';
 
-export async function handler(event) {
+exports.handler = async function(event, context) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
@@ -49,4 +48,4 @@ export async function handler(event) {
     console.error('Error adding nomination:', err);
     return { statusCode: 500, body: 'Error adding nomination' };
   }
-}
+};
