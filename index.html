@@ -122,7 +122,7 @@
   <!-- RSVP Form -->
   <h2 id="rsvp">RSVP</h2>
   <div class="form-container">
-    <form id="rsvpForm" action="https://script.google.com/macros/s/AKfycbyFhLr_XJil4ceT-E3KNt54AYFwB3XRsOFxRsQfXIfqvyh1ibGXmfoPdXoddj-cHPVI/exec" method="POST">
+    <form id="rsvpForm" action="/.netlify/functions/submitForm" method="POST">
       <input type="text" name="name" placeholder="Your Name" required>
       <input type="email" name="email" placeholder="Your Email" required>
       <input type="text" name="guests" placeholder="Number of Guests" required>
@@ -135,7 +135,7 @@
   <!-- Suggest & Vote Form -->
   <h2 id="suggestvote">Suggest & Vote</h2>
   <div class="form-container">
-    <form id="suggestForm" action="https://script.google.com/macros/s/AKfycby7te0c35e_aNZVOJ2-kRuD3JlR4bZMfT3c1If3SEZ243G6kLCJu__d6aoAoRrkFSaDcw/exec" method="POST">
+    <form id="suggestForm" action="/.netlify/functions/submitForm" method="POST">
       <input type="text" name="book" placeholder="Book Suggestion" required>
       <textarea name="reason" placeholder="Why you like it" rows="4"></textarea>
       <input type="submit" value="Submit Suggestion">
@@ -147,7 +147,7 @@
   <!-- Rate Our Books Form -->
   <h2 id="ratebooks">Rate Our Books</h2>
   <div class="form-container">
-    <form id="rateForm" action="https://script.google.com/macros/s/AKfycbwjeQlI3uCKx9LcdCbnexxk2l8DMvVqEHbGjaLi2D1iD8O65Z_uIfUtzQ5dBuLmNqmO/exec" method="POST">
+    <form id="rateForm" action="/.netlify/functions/submitForm" method="POST">
       <input type="text" name="book" placeholder="Book Title" required>
       <select name="rating" required>
         <option value="">Select Rating</option>
