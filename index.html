@@ -496,6 +496,130 @@ document.getElementById('ratingForm').addEventListener('submit', async e=>{
     statusDiv.style.color="red";
   }
 });
+
+  /* =======================
+   Suggest & Vote Form
+======================= */
+const nomForm = document.getElementById('nomForm');
+const nomStatus = document.getElementById('nomStatus');
+const nomsBody = document.querySelector('#nomsTable tbody');
+const submitBtn = document.getElementById('submitBtn');
+const votesLeftSpan = document.getElementById('votesLeft');
+const MAX_VOTES = 3;
+
+// Initialize sessionStorage votes
+if (!sessionStorage.getItem('votesCast')) sessionStorage.setItem('votesCast', '0');
+
+function getVotesLeft() {
+  return MAX_VOTES - parseInt(sessionStorage.getItem('votesCast') || '0', 10);
+}
+
+function updateVotesLeftDisplay() {
+  votesLeftSpan.textContent = getVotesLeft();
+}
+updateVotesLeftDisplay();
+
+function validUrl(u) {
+  try { 
+    const url = new URL(u); 
+    return url.protocol === 'http:' || url.protocol === 'https:'; 
+  } catch (e) { 
+    return false; 
+  }
+}
+
+async function loadNoms() {
+  try {
+    const data = await fetch('/.netlify/functions/getNominations').then(r => r.json());
+    nomsBody.innerHTML = '';
+    data.forEach((item) => {
+      const tr = document.createElement('tr');
+
+      const tTitle = document.createElement('td');
+      const a = document.createElement('a');
+      a.href = item.link;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = item.title || '';
+      tTitle.appendChild(a);
+
+      const tAuthor = document.createElement('td'); tAuthor.textContent = item.author || '';
+      const tGenre = document.createElement('td'); tGenre.textContent = item.genre || '';
+      const tVotes = document.createElement('td'); tVotes.textContent = item.votes || 0;
+
+      const tAction = document.createElement('td');
+      const voteBtn = document.createElement('button');
+      voteBtn.textContent = 'Vote';
+      voteBtn.className = 'vote-btn';
+      voteBtn.disabled = getVotesLeft() <= 0;
+      voteBtn.addEventListener('click', async function() {
+        if (getVotesLeft() <= 0) return;
+        try {
+          await fetch('/.netlify/functions/addVote', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({title: item.title})
+          });
+          const current = parseInt(sessionStorage.getItem('votesCast') || '0',10);
+          sessionStorage.setItem('votesCast', (current + 1).toString());
+          updateVotesLeftDisplay();
+          loadNoms();
+        } catch(e) { alert('Error: Could not register vote.'); }
+      });
+      tAction.appendChild(voteBtn);
+
+      tr.appendChild(tTitle); tr.appendChild(tAuthor); tr.appendChild(tGenre); tr.appendChild(tVotes); tr.appendChild(tAction);
+      nomsBody.appendChild(tr);
+    });
+  } catch(e) { console.error('Error loading nominations:', e); }
+}
+loadNoms();
+setInterval(loadNoms, 5000);
+
+nomForm.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  nomStatus.textContent = '';
+  nomStatus.classList.remove('error');
+  submitBtn.disabled = true;
+
+  const title = document.getElementById('title').value.trim();
+  const author = document.getElementById('author').value.trim();
+  const genre = document.getElementById('genre').value.trim();
+  const link = document.getElementById('link').value.trim();
+
+  if (!title || !author || !genre || !link) {
+    nomStatus.textContent = 'Please complete all fields.';
+    nomStatus.classList.add('error');
+    submitBtn.disabled = false;
+    return;
+  }
+  if (!validUrl(link)) {
+    nomStatus.textContent = 'Please enter a valid URL (include http:// or https://).';
+    nomStatus.classList.add('error');
+    submitBtn.disabled = false;
+    return;
+  }
+
+  nomStatus.textContent = 'Submitting nomination…';
+  nomStatus.style.color = '#4c1033';
+
+  try {
+    await fetch('/.netlify/functions/submitNomination', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({title, author, genre, link})
+    });
+    nomStatus.textContent = 'Thanks — nomination added!';
+    nomStatus.style.color = '#4c1033';
+    nomForm.reset();
+    loadNoms();
+  } catch(e) {
+    nomStatus.textContent = 'Error: Could not add nomination.';
+    nomStatus.classList.add('error');
+    console.error(e);
+  } finally { submitBtn.disabled = false; }
+});
+
 </script>
 
 
