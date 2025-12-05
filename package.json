@@ -1,6 +1,9 @@
 {
   "name": "gracesbookclub",
   "version": "1.0.0",
+  "engines": {
+    "node": "18"
+  },
   "dependencies": {
     "googleapis": "^122.0.0"
   }
