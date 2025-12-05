@@ -271,36 +271,35 @@
     });
   });
 
-  /***** RSVP Form *****/
-  const rsvpForm = document.getElementById('rsvpForm');
-  rsvpForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    const name = rsvpForm.name.value.trim();
-    const bringing = rsvpForm.bringing.value.trim();
-    if (!name || !bringing) return;
-
-    await fetch('/.netlify/functions/addRSVP', {
-      method: 'POST',
-      body: JSON.stringify({name, bringing})
-    });
-
-    rsvpForm.reset();
-    loadRSVPs();
-  });
-
-  async function loadRSVPs() {
-    const res = await fetch('/.netlify/functions/getRSVPs');
-    const data = await res.json();
-    const tbody = document.querySelector('#rsvp-table tbody');
-    tbody.innerHTML = '';
-    data.reverse().forEach(entry => {
-      const row = document.createElement('tr');
-      row.innerHTML = `<td>${entry.name}</td><td>${entry.bringing}</td>`;
-      tbody.appendChild(row);
-    });
+  // Load meeting info
+  function loadMeetingInfo() {
+    google.script.run.withSuccessHandler(function(info) {
+      ...
+    }).getMeetingInfo();
   }
+
+  // Load RSVPs into the table
+  function loadRSVPs() {
+    google.script.run.withSuccessHandler(function(data) {
+      ...
+    }).getRSVPs();
+  }
+
+  // Initial load
+  loadMeetingInfo();
   loadRSVPs();
 
+  // Auto-refresh every 5 seconds
+  setInterval(() => {
+    loadMeetingInfo();
+    loadRSVPs();
+  }, 5000);
+
+  // Handle form submission
+  document.getElementById('rsvpForm').addEventListener('submit', function(e) {
+    ...
+  });
+  
   /***** Suggest & Vote *****/
   const nomForm = document.getElementById('nomForm');
   const nomsBody = document.querySelector('#nomsTable tbody');
