@@ -372,9 +372,13 @@
         const tAction = document.createElement('td');
         const voteBtn = document.createElement('button');
         voteBtn.textContent = 'Vote';
-        // Updated to match site button style:
-        voteBtn.className = 'nav-bar-btn';
+
+        // --- Updated styling to match all other buttons ---
+        voteBtn.className = 'btn btn-primary'; // adjust classes to match your main buttons
+        voteBtn.style.padding = '10px 20px';
+        voteBtn.style.borderRadius = '5px';
         voteBtn.disabled = getVotesLeft() <= 0;
+
         voteBtn.addEventListener('click', async function() {
           if (getVotesLeft() <= 0) return;
           await fetch('/.netlify/functions/submitNomination', {
@@ -500,6 +504,7 @@
     }
   });
 </script>
+
 
   
 </body>
