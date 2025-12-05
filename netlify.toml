@@ -1,7 +1,19 @@
 [build]
-  command = "npm install && npm run build"
+  # Only install dependencies for functions; no separate build step
+  command = "npm install"
+  publish = "."          # root folder contains your index.html
   functions = "netlify/functions"
-  publish = "."
 
+# Optional: environment variables for your spreadsheets and service account
 [build.environment]
-  NODE_VERSION = "18"
+  GOOGLE_SERVICE_ACCOUNT = "your-google-service-account-json"
+  RSVP_SPREADSHEET_ID = "1ojGEBABMUB0-p1vKd0er03PbapHd3ZXWB3KlyrkowmY"
+  RATE_SPREADSHEET_ID = "your-rate-spreadsheet-id"
+  SUGGEST_SPREADSHEET_ID = "1WFoa1y-byiCyWb09xKifph6Nzs_9iSCx05fgR9edUbE"
+  NODE_VERSION = "20"
+
+# Redirect all functions calls correctly
+[[redirects]]
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
