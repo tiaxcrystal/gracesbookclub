@@ -15,7 +15,7 @@ export async function handler() {
 
     // Your Google Sheet ID and range
     const SHEET_ID = '1ojGEBABMUB0-p1vKd0er03PbapHd3ZXWB3KlyrkowmY';
-    const RANGE = 'MeetingInfo!C2:D2'; // C = Date, D = Theme
+    const RANGE = 'RSVPs!C2:D2'; // C = Date, D = Theme
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
