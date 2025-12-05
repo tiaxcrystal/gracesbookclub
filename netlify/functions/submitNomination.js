@@ -1,51 +1,53 @@
-const { google } = require('googleapis');
+import { google } from 'googleapis';
 
-const creds = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
-
-const auth = new google.auth.GoogleAuth({
-  credentials: creds,
-  scopes: ['https://www.googleapis.com/auth/spreadsheets']
-});
-
-const sheets = google.sheets({ version: 'v4', auth });
-
-const SPREADSHEET_ID = '1WFoa1y-byiCyWb09xKifph6Nzs_9iSCx05fgR9edUbE';
-const SHEET_NAME = 'Suggested Book List';
-
-exports.handler = async function(event, context) {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
-  }
-
+export async function handler(event, context) {
   try {
-    const { title, author, genre, link } = JSON.parse(event.body || '{}');
+    const body = JSON.parse(event.body);
+
+    const { title, author, genre, link } = body;
 
     if (!title || !author || !genre || !link) {
-      return { statusCode: 400, body: 'Missing required fields' };
+      return { statusCode: 400, body: 'Missing fields' };
     }
 
-    // Get current sheet data to calculate next ID
-    const res = await sheets.spreadsheets.values.get({
+    // Use the environment variable
+    const creds = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
+
+    const client = new google.auth.JWT(
+      creds.client_email,
+      null,
+      creds.private_key,
+      ['https://www.googleapis.com/auth/spreadsheets']
+    );
+
+    const gsapi = google.sheets({ version: 'v4', auth: client });
+
+    const SPREADSHEET_ID = process.env.SUGGEST_SPREADSHEET_ID;
+    const RANGE = 'Suggested Book List!A:F';
+
+    await gsapi.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEET_NAME}!A2:A`,
+      range: RANGE,
+      valueInputOption: 'RAW',
+      requestBody: {
+        values: [[
+          '', // ID, can leave blank or auto-generate
+          title,
+          author,
+          genre,
+          link,
+          0 // votes start at 0
+        ]]
+      }
     });
 
-    const ids = res.data.values ? res.data.values.map(row => parseInt(row[0], 10)) : [];
-    const nextId = ids.length ? Math.max(...ids) + 1 : 1;
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ message: 'Nomination added!' })
+    };
 
-    // Append new nomination
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: SPREADSHEET_ID,
-      range: SHEET_NAME,
-      valueInputOption: 'USER_ENTERED',
-      resource: {
-        values: [[nextId, title, author, genre, link, 0]],
-      },
-    });
-
-    return { statusCode: 200, body: JSON.stringify({ success: true }) };
-  } catch (err) {
-    console.error('Error adding nomination:', err);
+  } catch (error) {
+    console.error('Error in submitNomination:', error);
     return { statusCode: 500, body: 'Error adding nomination' };
   }
-};
+}
