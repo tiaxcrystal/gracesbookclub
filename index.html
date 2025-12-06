@@ -300,25 +300,64 @@
   gap: 0; /* no gap so single slide fits exactly */
 }
 
-/* Each slide fills the wrapper - ensures one slide visible at a time */
+/* --- Carousel: prevent cropping, keep square slides --- */
+
+/* Slide container kept square */
 .carousel-slide {
-  width: 100%;
-  flex: 0 0 100%;
+  /* prefer CSS aspect-ratio */
+  aspect-ratio: 1 / 1;      /* forces a square frame */
+  width: 260px;             /* controls visible slide width on larger screens */
+  max-width: 32vw;          /* responsive cap */
+  flex: 0 0 auto;
   display: flex;
-  flex-direction: column;
   align-items: stretch;
+  justify-content: center;
   background: white;
   border-radius: 8px;
-  box-sizing: border-box;
+  overflow: hidden;        /* keep rounded corners */
 }
 
+/* Fallback for browsers without aspect-ratio support */
+.carousel-slide--fallback {
+  position: relative;
+  width: 260px;
+  max-width: 32vw;
+}
+.carousel-slide--fallback::before {
+  content: "";
+  display: block;
+  padding-top: 100%; /* 1:1 aspect ratio */
+}
+
+/* Image rules: never crop, keep centered, letterbox as needed */
 .carousel-slide img {
   width: 100%;
-  height: 380px;
-  object-fit: cover;
+  height: 100%;
+  object-fit: contain;    /* show whole image, no crop */
+  object-position: center;
+  display: block;
+  background: #fff;       /* fills letterbox area — change if you want a different background */
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
 }
+
+/* If you need images to keep their original pixel size but fit inside the square:
+   use these instead of width/height 100% (optional)
+.carousel-slide img {
+  max-width: 100%;
+  max-height: 100%;
+  margin: auto;
+  object-fit: contain;
+}
+*/
+
+/* Slight responsive tweak for small screens */
+@media (max-width: 700px) {
+  .carousel-slide { width: 210px; max-width: 60vw; aspect-ratio: 1/1; }
+  .carousel-slide--fallback { width: 210px; }
+  .carousel-slide img { height: 100%; }
+}
+
 
 .carousel-caption {
   padding: 12px;
