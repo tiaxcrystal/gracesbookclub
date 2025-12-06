@@ -1,17 +1,56 @@
-const fs = require('fs');
-const path = require('path');
-const dataPath = path.join(__dirname, 'data.json');
+const { google } = require('googleapis');
 
-exports.handler = async function(event) {
-  if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
+exports.handler = async function(event, context) {
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'Method Not Allowed' };
+  }
 
-  const { book, rating } = JSON.parse(event.body);
-  if (!book || !rating) return { statusCode: 400, body: 'Missing fields' };
+  try {
+    const { book, rating } = JSON.parse(event.body);
 
-  const data = JSON.parse(fs.readFileSync(dataPath));
-  if (!data.ratings[book]) data.ratings[book] = [];
-  data.ratings[book].push(parseInt(rating, 10));
+    if (!book || !rating) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Book and rating are required.' })
+      };
+    }
 
-  fs.writeFileSync(dataPath, JSON.stringify(data, null, 2));
-  return { statusCode: 200, body: 'Rating submitted!' };
+    const ratingNum = Number(rating);
+    if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Rating must be a number between 1 and 5.' })
+      };
+    }
+
+    // Authenticate with Google Sheets
+    const auth = new google.auth.GoogleAuth({
+      credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT),
+      scopes: ['https://www.googleapis.com/auth/spreadsheets']
+    });
+
+    const sheets = google.sheets({ version: 'v4', auth });
+    const spreadsheetId = process.env.SUGGEST_SPREADSHEET_ID;
+
+    // Append row: [Book title, Rating]
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: 'Form Responses 1!A:B',
+      valueInputOption: 'USER_ENTERED',
+      resource: {
+        values: [[book, ratingNum]]
+      }
+    });
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ success: true })
+    };
+  } catch (err) {
+    console.error(err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Could not submit rating.' })
+    };
+  }
 };
