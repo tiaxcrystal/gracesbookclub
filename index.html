@@ -24,7 +24,7 @@
   }
 
   .suggested-books-table a:hover {
-    text-decoration: underline;
+    text-decoration: underline; 
   }
   
 /* Ensure disabled buttons look grayed and match your UI */
@@ -221,14 +221,14 @@
 
 .suggested-books-table th:nth-child(1),
 .suggested-books-table td:nth-child(1) {
-  width: 70%; /* Title column bigger */
+  width: 55%; /* Title column */
 }
 
 .suggested-books-table th:nth-child(2),
 .suggested-books-table td:nth-child(2),
 .suggested-books-table th:nth-child(3),
 .suggested-books-table td:nth-child(3) {
-  width: 30%; /* Votes columns smaller */
+  width: 40%; /* Votes columns */
   text-align: center;
 }
 
@@ -242,19 +242,16 @@
   text-decoration: underline;
 }
 
-/* Vote buttons styling (match other site buttons) */
+/* Vote buttons styling */
 .suggested-books-table button.vote-btn {
-  background-color: #eec2cd;
-  color: black;
+  background-color: #4c1033; /* wine color */
+  color: white;
   border: none;
-  padding: 8px 12px;
+  padding: 6px 12px;
   cursor: pointer;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  font-family: "Times New Roman", Times, serif;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  border-radius: 4px;
+  font-size: 0.9rem;
 }
-.suggested-books-table button.vote-btn:hover { background-color: #4c1033; color: white; }
 
 .suggested-books-table button.vote-btn:disabled {
   background-color: #ccc;
@@ -262,12 +259,13 @@
   color: #666;
 }
 
-/* ===== Past Books Carousel styles (single slide visible) ===== */
-.past-books-section.container {
-  /* Use same container sizing as others */
+  /* Past Books Carousel styles */
+.past-books-section {
   width: 90%;
-  max-width: 900px;
-  margin: 30px auto;
+  max-width: 1000px;
+  margin: 40px auto;
+  font-family: "Times New Roman", Times, serif;
+  color: #4c1033;
 }
 
 .past-books-section h2 {
@@ -293,74 +291,34 @@
 
 .carousel-track {
   display: flex;
-  padding: 0;
+  padding: 12px;
   margin: 0;
   list-style: none;
   transition: transform 0.45s cubic-bezier(.25,.8,.25,1);
-  gap: 0; /* no gap so single slide fits exactly */
+  gap: 12px;
 }
 
-/* --- Carousel: prevent cropping, keep square slides --- */
-
-/* Slide container kept square */
 .carousel-slide {
-  /* prefer CSS aspect-ratio */
-  aspect-ratio: 1 / 1;      /* forces a square frame */
-  width: 260px;             /* controls visible slide width on larger screens */
-  max-width: 32vw;          /* responsive cap */
+  min-width: 260px; /* controls visible slide width */
+  max-width: 320px;
   flex: 0 0 auto;
   display: flex;
+  flex-direction: column;
   align-items: stretch;
-  justify-content: center;
   background: white;
   border-radius: 8px;
-  overflow: hidden;        /* keep rounded corners */
 }
 
-/* Fallback for browsers without aspect-ratio support */
-.carousel-slide--fallback {
-  position: relative;
-  width: 260px;
-  max-width: 32vw;
-}
-.carousel-slide--fallback::before {
-  content: "";
-  display: block;
-  padding-top: 100%; /* 1:1 aspect ratio */
-}
-
-/* Image rules: never crop, keep centered, letterbox as needed */
 .carousel-slide img {
   width: 100%;
-  height: 100%;
-  object-fit: contain;    /* show whole image, no crop */
-  object-position: center;
-  display: block;
-  background: #fff;       /* fills letterbox area — change if you want a different background */
+  height: 200px;
+  object-fit: cover;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
 }
 
-/* If you need images to keep their original pixel size but fit inside the square:
-   use these instead of width/height 100% (optional)
-.carousel-slide img {
-  max-width: 100%;
-  max-height: 100%;
-  margin: auto;
-  object-fit: contain;
-}
-*/
-
-/* Slight responsive tweak for small screens */
-@media (max-width: 700px) {
-  .carousel-slide { width: 210px; max-width: 60vw; aspect-ratio: 1/1; }
-  .carousel-slide--fallback { width: 210px; }
-  .carousel-slide img { height: 100%; }
-}
-
-
 .carousel-caption {
-  padding: 12px;
+  padding: 10px;
   text-align: left;
   font-size: 1rem;
   color: #4c1033;
@@ -394,7 +352,6 @@
   box-shadow: 0 2px 6px rgba(0,0,0,0.12);
 }
 .carousel-btn:hover { background: #4c1033; color: white; }
-.carousel-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .small-btn {
   background: transparent;
@@ -408,9 +365,11 @@
 
 /* responsive */
 @media (max-width: 700px) {
-  .carousel-slide img { height: 220px; }
+  .carousel-slide { min-width: 210px; max-width: 260px; }
+  .carousel-slide img { height: 160px; }
   .past-books-section h2 { font-size: 20pt; }
 }
+
 </style>
 </head>
 <body>
@@ -422,8 +381,8 @@
   <button data-target="rate">Rate Our Books</button>
 </div>
 
-  <!-- Past Books carousel now IS a container and is active (home page) -->
-<section id="past-books" class="past-books-section container active">
+  <!-- Past Books carousel -->
+<section id="past-books" class="past-books-section">
   <h2>Past Books</h2>
   <div class="carousel" aria-roledescription="carousel">
     <button class="carousel-btn prev" aria-label="Previous book">◀</button>
@@ -442,8 +401,8 @@
 </section>
 
 
-<!-- RSVP Container (not active by default) -->
-<div id="rsvp" class="container">
+<!-- RSVP Container -->
+<div id="rsvp" class="container active">
   <h2>RSVP</h2>
   <form id="rsvpForm">
     <input type="text" name="name" placeholder="Your name" required><br>
@@ -476,6 +435,8 @@
   <h2>Suggested Books</h2>
   <p id="voteNotice" class="note">You have <span id="votesLeft">3</span> votes remaining.</p>
  
+  
+  
   <table id="nomsTable" aria-live="polite" class="suggested-books-table">
     <thead>
       <tr><th>Title</th><th colspan="2"></th></tr>
@@ -483,6 +444,7 @@
     <tbody></tbody>
   </table>
 </div>
+
 
 <!-- Rate Our Books Container -->
 <div id="rate" class="container">
@@ -511,6 +473,7 @@
   </div>
 </div>
 
+
 <script>
   // =======================
   // Navigation: switch active container
@@ -522,12 +485,7 @@
     btn.addEventListener('click', () => {
       const target = btn.getAttribute('data-target');
       containers.forEach(c => c.classList.remove('active'));
-      const el = document.getElementById(target);
-      if (el) {
-        el.classList.add('active');
-        // small UX: scroll to top of container
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+      document.getElementById(target).classList.add('active');
     });
   });
 
@@ -861,7 +819,7 @@
     }
   });
 
-  // ===== Past Books carousel frontend (ONE slide visible) =====
+  // Past Books carousel frontend
 (async function initPastBooksCarousel() {
   const track = document.querySelector('.carousel-track');
   const prevBtn = document.querySelector('.carousel-btn.prev');
@@ -871,8 +829,10 @@
 
   if (!track) return; // nothing to do
 
-  const PLACEHOLDER = '/favicon.ico';
+  // placeholder image if none provided
+  const PLACEHOLDER = '/favicon.ico'; // or any URL to a placeholder image
 
+  // fetch data
   let items = [];
   try {
     items = await fetch('/.netlify/functions/getPastBooks').then(r => {
@@ -896,6 +856,7 @@
     li.className = 'carousel-slide';
     li.setAttribute('data-index', idx);
 
+    // image: prefer picture (column D) otherwise pictureLink (E) maybe contains URL, try both
     const imgUrl = it.picture || it.pictureLink || PLACEHOLDER;
     const imgWrap = document.createElement('a');
     imgWrap.href = it.pictureLink || it.link || '#';
@@ -930,27 +891,41 @@
     track.appendChild(li);
   });
 
+  // carousel mechanics
   let slideIndex = 0;
   const slides = Array.from(track.children);
+  const visibleWidth = track.parentElement.clientWidth;
+  const slideGap = 12; // must match CSS gap
+  const slideWidths = slides.map(s => s.getBoundingClientRect().width + slideGap);
 
   function updateTrackPosition() {
-    const wrapper = track.parentElement;
-    const wrapperWidth = wrapper.getBoundingClientRect().width;
-    const offset = slideIndex * wrapperWidth;
+    // compute offset so selected slide is left-aligned
+    let offset = 0;
+    for (let i = 0; i < slideIndex; i++) offset += slideWidths[i] || 0;
     track.style.transform = `translateX(-${offset}px)`;
+    // disable/enable buttons if at ends
     prevBtn.disabled = (slideIndex === 0);
     nextBtn.disabled = (slideIndex >= slides.length - 1);
   }
 
   function nextSlide() {
-    if (slideIndex < slides.length - 1) slideIndex++;
-    else slideIndex = 0;
-    updateTrackPosition();
+    if (slideIndex < slides.length - 1) {
+      slideIndex++;
+      updateTrackPosition();
+    } else {
+      // wrap
+      slideIndex = 0;
+      updateTrackPosition();
+    }
   }
   function prevSlide() {
-    if (slideIndex > 0) slideIndex--;
-    else slideIndex = slides.length - 1;
-    updateTrackPosition();
+    if (slideIndex > 0) {
+      slideIndex--;
+      updateTrackPosition();
+    } else {
+      slideIndex = slides.length - 1;
+      updateTrackPosition();
+    }
   }
 
   prevBtn.addEventListener('click', prevSlide);
@@ -960,14 +935,14 @@
   document.addEventListener('keydown', e => {
     if (e.key === 'ArrowLeft') prevSlide();
     if (e.key === 'ArrowRight') nextSlide();
-    if (e.key === ' ' || e.key === 'Spacebar') {
+    if (e.key === ' ' || e.key === 'Spacebar') { // space toggles play/pause
       e.preventDefault();
       toggleAutoplay();
     }
   });
 
-   // autoplay (disabled by default)
-  let autoplay = false;
+  // autoplay
+  let autoplay = true;
   const INTERVAL = 5000;
   let timer = null;
 
@@ -997,34 +972,49 @@
   pauseBtn.addEventListener('click', stopAutoplay);
 
   // initial layout after images load
-  ...
-  // do NOT auto-start; leave paused so user must click Play to begin
-  // startAutoplay();
+  function recalcWidths() {
+    const gap = slideGap;
+    const rects = slides.map(s => s.getBoundingClientRect().width + gap);
+    for (let i = 0; i < rects.length; i++) slideWidths[i] = rects[i];
+    updateTrackPosition();
+  }
 
-
-  // wait for images to settle then set position
+  // make sure to recalc after images load (they might be remote)
   let imagesLoaded = 0;
   slides.forEach(slide => {
     const img = slide.querySelector('img');
     if (!img) { imagesLoaded++; return; }
     if (img.complete) {
       imagesLoaded++;
-      if (imagesLoaded === slides.length) updateTrackPosition();
+      if (imagesLoaded === slides.length) recalcWidths();
     } else {
       img.addEventListener('load', () => {
         imagesLoaded++;
-        if (imagesLoaded === slides.length) updateTrackPosition();
+        if (imagesLoaded === slides.length) recalcWidths();
       });
       img.addEventListener('error', () => {
         imagesLoaded++;
-        if (imagesLoaded === slides.length) updateTrackPosition();
+        if (imagesLoaded === slides.length) recalcWidths();
       });
     }
   });
 
+  // start autoplay
   startAutoplay();
+
+  // reflow on resize
+  window.addEventListener('resize', () => {
+    // small debounce
+    clearTimeout(window._pastBooksResize);
+    window._pastBooksResize = setTimeout(() => recalcWidths(), 120);
+  });
 })();
+
 </script>
 
+
+
+  
+  
 </body>
 </html>
