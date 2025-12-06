@@ -261,7 +261,8 @@
   </div>
 </div>
 
-<script>
+
+  <script>
   // =======================
   // Navigation: switch active container
   // =======================
@@ -295,7 +296,7 @@
         row.appendChild(nameCell); row.appendChild(bringingCell);
         rsvpTableBody.appendChild(row);
       });
-    } catch(e) { console.error(e); }
+    } catch(e) { console.error('Error loading RSVPs:', e); }
   }
 
   async function loadMeetingInfo() {
@@ -303,7 +304,7 @@
       const info = await fetch('/.netlify/functions/getMeetingInfo').then(r => r.json());
       meetingDate.textContent = `Date: ${info.date}`;
       meetingTheme.textContent = `Theme: ${info.theme}`;
-    } catch(e) { console.error(e); }
+    } catch(e) { console.error('Error loading meeting info:', e); }
   }
 
   loadRSVPs();
@@ -315,13 +316,17 @@
     const name = this.name.value.trim();
     const bringing = this.bringing.value.trim();
     if (!name || !bringing) return;
-    await fetch('/.netlify/functions/addRSVP', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, bringing })
-    });
-    this.reset();
-    loadRSVPs();
+    try {
+      await fetch('/.netlify/functions/addRSVP', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, bringing })
+      });
+      this.reset();
+      loadRSVPs();
+    } catch (err) {
+      console.error('Error submitting RSVP:', err);
+    }
   });
 
   // =======================
@@ -352,52 +357,112 @@
 
   async function loadNoms() {
     try {
-      const data = await fetch('/.netlify/functions/getNominations').then(r => r.json());
+      const data = await fetch('/.netlify/functions/getNominations').then(r => {
+        if (!r.ok) throw new Error('Network response not ok');
+        return r.json();
+      });
       nomsBody.innerHTML = '';
+
+      if (!data || !data.length) {
+        nomsBody.innerHTML = '<tr><td colspan="5">No nominations yet.</td></tr>';
+        return;
+      }
+
       data.forEach(item => {
         const tr = document.createElement('tr');
 
+        // Title with link
         const tTitle = document.createElement('td');
         const a = document.createElement('a');
-        a.href = item.link;
+        a.href = item.link || '#';
         a.target = '_blank';
         a.rel = 'noopener';
         a.textContent = item.title || '';
         tTitle.appendChild(a);
 
+        // Other columns
         const tAuthor = document.createElement('td'); tAuthor.textContent = item.author || '';
         const tGenre = document.createElement('td'); tGenre.textContent = item.genre || '';
-        const tVotes = document.createElement('td'); tVotes.textContent = item.votes || 0;
+        const tVotes = document.createElement('td'); tVotes.textContent = (typeof item.votes === 'number') ? item.votes : (item.votes || 0);
 
+        // Action (vote) - uses stable ID
         const tAction = document.createElement('td');
         const voteBtn = document.createElement('button');
+        voteBtn.type = 'button';
         voteBtn.textContent = 'Vote';
 
-        // --- Updated styling to match all other buttons ---
-        voteBtn.className = 'btn btn-primary'; // adjust classes to match your main buttons
-        voteBtn.style.padding = '10px 20px';
-        voteBtn.style.borderRadius = '5px';
+        // Make vote button match your form submit buttons exactly:
+        // same class + ensure normal font-weight (non-bold)
+        voteBtn.className = 'submit-btn';
+        voteBtn.style.fontWeight = '400'; // ensure not bold
+        // ensure disabled styling is inherited from CSS
         voteBtn.disabled = getVotesLeft() <= 0;
+
+        // Store the nomination id on the button for clarity
+        voteBtn.dataset.nomId = item.id || item.ID || '';
 
         voteBtn.addEventListener('click', async function() {
           if (getVotesLeft() <= 0) return;
-          await fetch('/.netlify/functions/submitNomination', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: item.title })
-          });
-          const current = parseInt(sessionStorage.getItem('votesCast') || '0', 10);
-          sessionStorage.setItem('votesCast', (current + 1).toString());
-          updateVotesLeftDisplay();
-          loadNoms();
+          const nomId = this.dataset.nomId;
+          if (!nomId) {
+            // fallback to title (less reliable) if no id available
+            console.warn('No nomination ID present, attempting vote by title.');
+          }
+
+          try {
+            // call addVote function with the ID (preferred)
+            const payload = { submitted: nomId || item.title };
+            const resp = await fetch('/.netlify/functions/addVote', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+
+            if (!resp.ok) {
+              const txt = await resp.text().catch(()=>null);
+              console.error('Vote function error:', resp.status, txt);
+              alert('Could not register vote.');
+              return;
+            }
+
+            const result = await resp.json().catch(()=>null);
+            // increment session vote count and refresh UI
+            const current = parseInt(sessionStorage.getItem('votesCast') || '0', 10);
+            sessionStorage.setItem('votesCast', (current + 1).toString());
+            updateVotesLeftDisplay();
+
+            // Immediately update votes cell if possible for snappier UI:
+            // find the sibling votes cell and increment visually (best-effort)
+            try {
+              const votesCell = tVotes;
+              const currentVotesNum = parseInt(votesCell.textContent || '0', 10);
+              if (!isNaN(currentVotesNum)) votesCell.textContent = currentVotesNum + 1;
+            } catch(e) { /* ignore visual update failure */ }
+
+            // Refresh nominations from server to get authoritative order/counts
+            loadNoms();
+          } catch (err) {
+            console.error('Error submitting vote:', err);
+            alert('Error registering vote.');
+          }
         });
+
         tAction.appendChild(voteBtn);
 
-        tr.appendChild(tTitle); tr.appendChild(tAuthor); tr.appendChild(tGenre); tr.appendChild(tVotes); tr.appendChild(tAction);
+        tr.appendChild(tTitle);
+        tr.appendChild(tAuthor);
+        tr.appendChild(tGenre);
+        tr.appendChild(tVotes);
+        tr.appendChild(tAction);
         nomsBody.appendChild(tr);
       });
-    } catch(e) { console.error('Error loading nominations:', e); }
+    } catch(e) {
+      console.error('Error loading nominations:', e);
+      nomsBody.innerHTML = '<tr><td colspan="5">Error loading nominations.</td></tr>';
+    }
   }
+
+  // initial load + periodic refresh
   loadNoms();
   setInterval(loadNoms, 5000);
 
@@ -442,7 +507,9 @@
       nomStatus.textContent = 'Error: Could not add nomination.';
       nomStatus.classList.add('error');
       console.error(e);
-    } finally { submitBtn.disabled = false; }
+    } finally {
+      submitBtn.disabled = false;
+    }
   });
 
   // =======================
@@ -455,13 +522,14 @@
   async function populateBooks() {
     try {
       const books = await fetch('/.netlify/functions/getBookList').then(r => r.json());
+      bookSelect.innerHTML = '';
       books.forEach(book => {
         const option = document.createElement('option');
         option.value = book; option.text = book;
         bookSelect.add(option);
       });
       refreshAverages();
-    } catch(e){ console.error(e); }
+    } catch(e){ console.error('Error loading book list:', e); }
   }
 
   async function refreshAverages() {
@@ -477,7 +545,7 @@
         row.appendChild(bookCell); row.appendChild(avgCell); row.appendChild(countCell);
         avgTableBody.appendChild(row);
       });
-    } catch(e){ console.error(e); }
+    } catch(e){ console.error('Error loading averages:', e); }
   }
 
   populateBooks();
