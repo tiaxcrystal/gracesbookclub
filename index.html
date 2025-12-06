@@ -12,7 +12,7 @@
 <style>
 .title-image {
   
-  width: 80%;       /* makes image stretch across the page */
+  width: 100%;       /* makes image stretch across the page */
   height: auto;      /* maintains aspect ratio */
   display: block;    /* removes any small inline spacing */
 }
@@ -73,10 +73,11 @@
 }
 
 .nav-bar {
+  width: 95%; 
   display: flex;
   justify-content: center;
   flex-wrap: nowrap; /* keep all buttons in one row */
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
   background-color: #ffffff; /* white */
 }
@@ -135,8 +136,8 @@
   }
 
   .note {
-    font-size: 11pt;
-    color: #666;
+    font-size: 1.05rem;
+    color: #000000;
     font-family: "Times New Roman", Times, serif;
     margin-top: 6px;
   }
@@ -538,8 +539,15 @@
     <button type="submit" class="submit-btn">Submit</button>
   </form>
   <div class="divider"></div>
+
+  <h2>Our Next Meeting</h2>
   <p id="meeting-date" class="note"></p>
+   <p class="note">Time: 6:15 p.m.</p>
+   <p class="note">Location: Grace's House</p>
   <p id="meeting-theme" class="note"></p>
+ 
+  
+  
   <table id="rsvp-table">
     <thead>
       <tr><th>Name</th><th>Bringing</th></tr>
@@ -560,7 +568,7 @@
 
   <div class="divider"></div>
 
-  <h2>Suggested Books</h2>
+  <h2>Potential Next Reads</h2>
   <p id="voteNotice" class="note">You have <span id="votesLeft">3</span> votes remaining.</p>
  
   
@@ -592,6 +600,8 @@
 
     <button type="submit" class="submit-btn">Submit</button>
   </form>
+  <div class="divider"></div>
+  <h2>Our Ratings</h2>
   <div id="status" class="note"></div>
   <div id="averages">
     <table>
