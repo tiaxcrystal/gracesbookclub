@@ -6,7 +6,6 @@ exports.handler = async function(event, context) {
   }
 
   try {
-    // Authenticate with service account
     const auth = new google.auth.GoogleAuth({
       credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT),
       scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly']
@@ -15,32 +14,29 @@ exports.handler = async function(event, context) {
     const sheets = google.sheets({ version: 'v4', auth });
     const spreadsheetId = process.env.RATINGS_SPREADSHEET_ID;
 
-    // Read all rows from 'Form Responses 1'
+    // Get all rows from "Ratings"
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Form Responses 1!A:B' // adjust if columns are different
+      range: 'Ratings!B:C' // Column B: Book, Column C: Rating
     });
 
     const rows = response.data.values || [];
 
-    if (rows.length < 2) {
-      // No data besides headers
-      return { statusCode: 200, body: JSON.stringify([]) };
-    }
+    // Map rows to objects { book, rating }
+    const ratings = rows.map(r => ({
+      book: r[0] || '',
+      rating: r[1] ? parseFloat(r[1]) : null
+    })).filter(r => r.book && r.rating !== null);
 
-    // Convert to array of objects, skipping header row
-    const [header, ...dataRows] = rows;
-    const bookIdx = header.indexOf('Book'); // column header for book
-    const ratingIdx = header.indexOf('Rating'); // column header for rating
-
-    const result = dataRows.map(r => ({
-      book: r[bookIdx] || '',
-      rating: r[ratingIdx] || ''
-    }));
-
-    return { statusCode: 200, body: JSON.stringify(result) };
+    return {
+      statusCode: 200,
+      body: JSON.stringify(ratings)
+    };
   } catch (err) {
     console.error(err);
-    return { statusCode: 500, body: JSON.stringify({ error: 'Could not fetch ratings.' }) };
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Could not fetch ratings.' })
+    };
   }
 };
