@@ -1,4 +1,5 @@
 const { google } = require('googleapis');
+const crypto = require('crypto'); // for UUID generation
 
 exports.handler = async function(event, context) {
   if (event.httpMethod !== 'POST') {
@@ -15,7 +16,7 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Optional: simple URL validation
+    // Simple URL validation
     try {
       const url = new URL(link);
       if (url.protocol !== 'http:' && url.protocol !== 'https:') throw new Error();
@@ -26,6 +27,9 @@ exports.handler = async function(event, context) {
       };
     }
 
+    // Generate a unique ID for column A
+    const id = crypto.randomUUID();
+
     // Load Google service account credentials from environment
     const auth = new google.auth.GoogleAuth({
       credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT),
@@ -35,13 +39,14 @@ exports.handler = async function(event, context) {
     const sheets = google.sheets({ version: 'v4', auth });
     const spreadsheetId = process.env.SUGGEST_SPREADSHEET_ID;
 
-    // Append row: title | author (blank) | genre (blank) | link | votes (0)
+    // Append row in proper column order:
+    // A: ID | B: Title | C: Author (blank) | D: Genre (blank) | E: Link | F: Votes (0)
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: 'Suggested Book List!A:E',
+      range: 'Suggested Book List!A:F',
       valueInputOption: 'USER_ENTERED',
       resource: {
-        values: [[title, '', '', link, 0]]
+        values: [[id, title, '', '', link, 0]]
       }
     });
 
