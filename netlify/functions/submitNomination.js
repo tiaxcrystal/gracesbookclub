@@ -1,67 +1,59 @@
-// netlify/functions/submitNomination.js
 const { google } = require('googleapis');
-const crypto = require('crypto');
 
-const SPREADSHEET_ID = process.env.SUGGEST_SPREADSHEET_ID;
-/**
- * Expect body: { title, author, genre, link }
- */
 exports.handler = async function(event, context) {
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ success:false, error:'Method Not Allowed' }) };
+    return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
-  let body = {};
-  try { body = JSON.parse(event.body || '{}'); } catch (e) {
-    return { statusCode:400, body: JSON.stringify({ success:false, error:'Invalid JSON' }) };
-  }
-
-  const title = (body.title || '').toString().trim();
-  const author = (body.author || '').toString().trim();
-  const genre = (body.genre || '').toString().trim();
-  const link = (body.link || '').toString().trim();
-
-  if (!title || !author || !genre || !link) {
-    return { statusCode:400, body: JSON.stringify({ success:false, error:'All fields required' }) };
-  }
-
-  // Basic URL validation
   try {
-    const url = new URL(link);
-    if (!['http:', 'https:'].includes(url.protocol)) {
-      throw new Error('Invalid protocol');
+    const { title, link } = JSON.parse(event.body);
+
+    if (!title || !link) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Title and link are required.' })
+      };
     }
-  } catch (e) {
-    return { statusCode:400, body: JSON.stringify({ success:false, error:'Link must be a valid URL starting with http:// or https://' }) };
-  }
 
-  if (!SPREADSHEET_ID) {
-    return { statusCode:500, body: JSON.stringify({ success:false, error:'SUGGEST_SPREADSHEET_ID not configured' }) };
-  }
+    // Optional: simple URL validation
+    try {
+      const url = new URL(link);
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') throw new Error();
+    } catch (e) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Invalid URL.' })
+      };
+    }
 
-  try {
-    const creds = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT || '{}');
+    // Load Google service account credentials from environment
     const auth = new google.auth.GoogleAuth({
-      credentials: creds,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+      credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT),
+      scopes: ['https://www.googleapis.com/auth/spreadsheets']
     });
+
     const sheets = google.sheets({ version: 'v4', auth });
+    const spreadsheetId = process.env.SUGGEST_SPREADSHEET_ID;
 
-    const id = (crypto.randomUUID && crypto.randomUUID()) || crypto.randomBytes(16).toString('hex');
-
-    const values = [[ id, title, author, genre, link, 0 ]];
-
+    // Append row: title | author (blank) | genre (blank) | link | votes (0)
     await sheets.spreadsheets.values.append({
-      spreadsheetId: SPREADSHEET_ID,
-      range: 'Suggested Book List!A:F',
+      spreadsheetId,
+      range: 'Suggested Book List!A:E',
       valueInputOption: 'USER_ENTERED',
-      insertDataOption: 'INSERT_ROWS',
-      requestBody: { values }
+      resource: {
+        values: [[title, '', '', link, 0]]
+      }
     });
 
-    return { statusCode:200, body: JSON.stringify({ success:true, id }) };
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ success: true })
+    };
   } catch (err) {
-    console.error('submitNomination error:', err);
-    return { statusCode:500, body: JSON.stringify({ success:false, error:'Server error', details: err.message || String(err) }) };
+    console.error(err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Could not submit nomination.' })
+    };
   }
 };
