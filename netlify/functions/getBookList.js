@@ -12,24 +12,28 @@ exports.handler = async function(event, context) {
     });
 
     const sheets = google.sheets({ version: 'v4', auth });
-    const spreadsheetId = process.env.BOOKS_SPREADSHEET_ID; // make sure this is set in Netlify
-    const range = 'Book List!A:A'; // column A on the Book List tab
+    const spreadsheetId = process.env.BOOKLIST_SPREADSHEET_ID;
 
-    const response = await sheets.spreadsheets.values.get({ spreadsheetId, range });
+    // Read column A from "Book List"
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: 'Book List!A:A'
+    });
+
     const rows = response.data.values || [];
 
-    // skip header row
-    const books = rows.slice(1).map(r => r[0]).filter(Boolean);
+    // Remove header row
+    const titles = rows.slice(1).map(r => r[0]).filter(Boolean);
 
     return {
       statusCode: 200,
-      body: JSON.stringify(books)
+      body: JSON.stringify(titles)
     };
   } catch (err) {
     console.error('Error fetching book list:', err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Could not fetch book list.' })
+      body: JSON.stringify({ error: 'Could not fetch book list' })
     };
   }
 };
