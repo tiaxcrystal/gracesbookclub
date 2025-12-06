@@ -895,25 +895,24 @@
 
 
 
+
   
   
-/* Full replacement for initPastBooksCarousel
+  
+
+/* Carousel script — fixed for gap accumulation bug.
    - one-image-at-a-time
-   - no autoplay, no play/pause UI
-   - Prev/Next arrows centered under the image + caption
-   - clicking image opens Goodreads link (it.link)
-   - images come from it.picture or it.pictureLink (no preemptive fallback)
-   - fallback to placeholder only if image fails to load */
+   - no autoplay
+   - arrows centered under the image
+   - clicking image opens Goodreads (it.link)
+   - accounts for CSS gap when translating the track */
 (async function initPastBooksCarousel() {
   const track = document.querySelector('.carousel-track');
-  const prevBtn = document.querySelector('.carousel-btn.prev');
-  const nextBtn = document.querySelector('.carousel-btn.next');
   const trackWrapper = document.querySelector('.carousel-track-wrapper');
-  const carouselControlsContainer = document.querySelector('.carousel-controls');
 
   if (!track || !trackWrapper) return;
 
-  // reliable placeholder (your raw GitHub favicon PNG)
+  // placeholder
   const PLACEHOLDER = 'https://raw.githubusercontent.com/tiaxcrystal/gracesbookclub/main/images/favicon.png';
 
   // fetch data
@@ -925,44 +924,36 @@
   } catch (err) {
     console.error('Could not load past books', err);
     track.innerHTML = '<li style="padding:20px;">Could not load past books.</li>';
-    if (prevBtn) prevBtn.disabled = true;
-    if (nextBtn) nextBtn.disabled = true;
     return;
   }
 
   if (!items || !items.length) {
     track.innerHTML = '<li style="padding:20px;">No past books yet.</li>';
-    if (prevBtn) prevBtn.disabled = true;
-    if (nextBtn) nextBtn.disabled = true;
     return;
   }
 
   // clear existing slides
   track.innerHTML = '';
 
-  // create slides
+  // build slides
   items.forEach((it, idx) => {
     const li = document.createElement('li');
     li.className = 'carousel-slide';
     li.setAttribute('data-index', idx);
     li.style.boxSizing = 'border-box';
 
-    // Use image URL directly if provided; do NOT pre-fallback to placeholder.
-    // If the image fails to load, the onerror handler will swap to the placeholder.
     const imgUrl = (it.picture && it.picture.trim()) ? it.picture.trim()
                  : (it.pictureLink && it.pictureLink.trim()) ? it.pictureLink.trim()
                  : '';
 
     const finalImgSrc = imgUrl || PLACEHOLDER;
 
-    // clicking opens Goodreads link from column B -> it.link
     const goodreadsHref = (it.link && it.link.trim()) ? it.link.trim() : '#';
     const imgWrap = document.createElement('a');
     imgWrap.href = goodreadsHref;
     imgWrap.target = '_blank';
     imgWrap.rel = 'noopener noreferrer';
 
-    // image element: will load the provided URL; error handler will swap to placeholder
     const img = document.createElement('img');
     img.src = finalImgSrc;
     img.alt = it.title ? `${it.title} cover` : 'Book cover';
@@ -982,7 +973,6 @@
 
     imgWrap.appendChild(img);
 
-    // caption
     const caption = document.createElement('div');
     caption.className = 'carousel-caption';
     const titleLink = document.createElement('a');
@@ -999,7 +989,6 @@
       caption.appendChild(monthSpan);
     }
 
-    // image container that keeps square ratio (aspect-ratio CSS used; JS will size as fallback)
     const imgContainer = document.createElement('div');
     imgContainer.className = 'carousel-image-container';
     imgContainer.style.boxSizing = 'border-box';
@@ -1010,59 +999,65 @@
     track.appendChild(li);
   });
 
-  // Hide the original play/pause area if present (we will only use prev/next below)
-  if (carouselControlsContainer) carouselControlsContainer.style.display = 'none';
-  // Also hide any #carousel-play/#carousel-pause elements if they exist
-  const playEl = document.getElementById('carousel-play');
-  const pauseEl = document.getElementById('carousel-pause');
-  if (playEl) playEl.style.display = 'none';
-  if (pauseEl) pauseEl.style.display = 'none';
+  // Remove any old side buttons (if present) — we'll create centered controls
+  const oldSidePrev = document.querySelector('.carousel-btn.prev');
+  const oldSideNext = document.querySelector('.carousel-btn.next');
+  if (oldSidePrev) oldSidePrev.remove();
+  if (oldSideNext) oldSideNext.remove();
 
-  // Create centered control bar under the carousel (in case existing DOM doesn't place them there)
-  // If your HTML already has .carousel-controls (hidden above) we won't create a duplicate.
-  let controlsBar = document.querySelector('.carousel-controls-bottom');
+  // ensure there's a controls container under the carousel
+  let controlsBar = document.querySelector('.carousel-controls');
+  const trackWrapperExistingControls = document.querySelector('.carousel-track-wrapper + .carousel-controls');
   if (!controlsBar) {
     controlsBar = document.createElement('div');
     controlsBar.className = 'carousel-controls';
-    // place after the track wrapper in DOM
-    trackWrapper.insertAdjacentElement('afterend', controlsBar);
+    // if the page already has a .carousel-controls further down, prefer inserting there
+    if (trackWrapperExistingControls) {
+      // use the existing one and clear it
+      controlsBar = trackWrapperExistingControls;
+      controlsBar.innerHTML = '';
+    } else {
+      trackWrapper.insertAdjacentElement('afterend', controlsBar);
+    }
+  } else {
+    // clear and reuse
+    controlsBar.innerHTML = '';
   }
 
-  // If prev/next buttons exist in DOM already (sides), move clones into the controlsBar to place them underneath.
-  // We'll always make fresh buttons inside controlsBar so they're positioned correctly.
-  // Remove any existing side buttons to avoid duplicates.
-  const existingSidePrev = document.querySelector('.carousel-btn.prev');
-  const existingSideNext = document.querySelector('.carousel-btn.next');
-  if (existingSidePrev) existingSidePrev.remove();
-  if (existingSideNext) existingSideNext.remove();
+  // create new centered prev/next
+  const prevBtn = document.createElement('button');
+  prevBtn.className = 'carousel-btn prev';
+  prevBtn.type = 'button';
+  prevBtn.setAttribute('aria-label', 'Previous book');
+  prevBtn.textContent = '◀';
 
-  // Create new Prev and Next buttons centered under carousel
-  const newPrev = document.createElement('button');
-  newPrev.className = 'carousel-btn prev';
-  newPrev.type = 'button';
-  newPrev.setAttribute('aria-label', 'Previous book');
-  newPrev.textContent = '◀';
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'carousel-btn next';
+  nextBtn.type = 'button';
+  nextBtn.setAttribute('aria-label', 'Next book');
+  nextBtn.textContent = '▶';
 
-  const newNext = document.createElement('button');
-  newNext.className = 'carousel-btn next';
-  newNext.type = 'button';
-  newNext.setAttribute('aria-label', 'Next book');
-  newNext.textContent = '▶';
+  controlsBar.appendChild(prevBtn);
+  controlsBar.appendChild(nextBtn);
 
-  // append into controls bar
-  controlsBar.appendChild(newPrev);
-  controlsBar.appendChild(newNext);
-
-  // Now wire these new buttons
   const slides = Array.from(track.children);
   let slideIndex = 0;
+
+  function getGap() {
+    // read computed gap from track; fallback to 12px if parse fails
+    const computed = getComputedStyle(track).gap;
+    const parsed = parseFloat(computed);
+    return (isFinite(parsed) ? parsed : 12);
+  }
 
   function setSizes() {
     const wrapperWidth = trackWrapper.clientWidth;
     slides.forEach(slide => {
+      // ensure width equals wrapper width (one slide visible)
+      slide.style.width = wrapperWidth + 'px';
       slide.style.minWidth = wrapperWidth + 'px';
       slide.style.maxWidth = wrapperWidth + 'px';
-      // image container height equals wrapper width to ensure square (fallback for browsers not honoring aspect-ratio)
+      // image container square fallback:
       const imgContainer = slide.querySelector('.carousel-image-container');
       if (imgContainer) imgContainer.style.height = wrapperWidth + 'px';
     });
@@ -1071,11 +1066,12 @@
 
   function updateTrackPosition() {
     const wrapperWidth = trackWrapper.clientWidth;
-    const offset = slideIndex * wrapperWidth;
+    const gap = getGap();
+    const stride = wrapperWidth + gap; // account for gap so slides stay centered
+    const offset = slideIndex * stride;
     track.style.transform = `translateX(-${offset}px)`;
-    // disable/enable buttons if at ends
-    newPrev.disabled = (slideIndex === 0);
-    newNext.disabled = (slideIndex >= slides.length - 1);
+    prevBtn.disabled = (slideIndex === 0);
+    nextBtn.disabled = (slideIndex >= slides.length - 1);
   }
 
   function nextSlide() {
@@ -1091,8 +1087,8 @@
     }
   }
 
-  newPrev.addEventListener('click', prevSlide);
-  newNext.addEventListener('click', nextSlide);
+  prevBtn.addEventListener('click', prevSlide);
+  nextBtn.addEventListener('click', nextSlide);
 
   // keyboard accessibility
   document.addEventListener('keydown', e => {
@@ -1100,7 +1096,7 @@
     if (e.key === 'ArrowRight') nextSlide();
   });
 
-  // Wait for layout + images to load, then size slides
+  // image load tracking then finalize layout
   let imagesToLoad = slides.length;
   let imagesSeen = 0;
   slides.forEach(slide => {
@@ -1117,10 +1113,8 @@
     }
   });
 
-  // finalize layout (try immediate & again when images report done)
   function finalizeLayout() {
     setSizes();
-    // if images take longer, recalc after a timeout
     const timeout = setTimeout(() => setSizes(), 300);
     const interval = setInterval(() => {
       if (imagesSeen >= imagesToLoad) {
@@ -1132,7 +1126,7 @@
   }
   finalizeLayout();
 
-  // Recalc sizes on resize (debounced)
+  // resize handler (debounced)
   let resizeTimer = null;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
@@ -1141,11 +1135,12 @@
     }, 120);
   });
 
-  // ensure initial button state
+  // initial state for buttons
   updateTrackPosition();
 
-  // done — no autoplay, manual controls only
 })();
+
+
 
 
 </script>
