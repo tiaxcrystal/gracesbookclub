@@ -42,49 +42,58 @@
   transform: translateY(-1px);
 }
   
- /* NAV stays flexible and always 1 row */
+
+
+  /* Top nav */
+.nav-bar-container {
+  text-align: center;
+  font-family: "Times New Roman", Times, serif;
+  background-color: #eec2cd;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  padding: 12px 0;
+}
+
+.nav-bar-title {
+  font-size: clamp(20px, 5vw, 32px);
+  color: #4c1033;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
 .nav-bar {
   display: flex;
   justify-content: center;
-  align-items: stretch;
-  width: 100%;
-  max-width: 1000px;
-  gap: 10px;
-  padding: 8px;
-  box-sizing: border-box;
-  flex-wrap: nowrap; /* force 1 row */
-  overflow-x: hidden; /* prevent horizontal scroll */
+  flex-wrap: nowrap; /* keep all buttons in one row */
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-/* Buttons flex evenly and shrink text responsively */
-.nav-bar .nav-btn {
-  flex: 1 1 0; /* each button takes equal width */
-  white-space: nowrap; /* prevent wrapping inside button */
+.nav-bar button {
+  padding: 12px 20px;
+  font-size: clamp(14px, 2.5vw, 18px); /* responsive text */
+  border-radius: 6px;
+  border: none;
+  font-family: "Times New Roman", Times, serif;
+  cursor: pointer;
+  transition: all 0.18s;
   background-color: #eec2cd;
   color: black;
-  border: none;
-  padding: 10px 6px;
-  border-radius: 8px;
-  font-family: "Times New Roman", Times, serif;
-
-  /* ✨ Magic text resizing — auto shrinks on small screens */
-  font-size: clamp(10px, 3.5vw, 16px);
-
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-  transition: background-color 0.18s, transform 0.12s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  white-space: nowrap; /* prevent text wrap */
 }
 
-.nav-bar .nav-btn:hover {
+.nav-bar button:hover {
   background-color: #4c1033;
   color: white;
-  transform: translateY(-1px);
 }
 
-.nav-bar .nav-btn[aria-current="true"] {
-  background-color: #4c1033;
-  color: #fff;
+/* Optional: slightly smaller gap on very small screens */
+@media (max-width: 500px) {
+  .nav-bar {
+    gap: 4px;
+  }
 }
+
 
 
   /* Form containers */
@@ -462,17 +471,29 @@
 }
 
 
-  
+  /* Big centered title */
+.site-title {
+  margin: 0;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 30px;      /* desktop size */
+  color: #4c1033;
+  text-align: center;
+  line-height: 1;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+}
 
 </style>
 </head>
 <body>
 
+<h1 class="site-title">Grace's Book Club</h1>
+  
 <div class="nav-bar">
-  <button data-target="past-books" class=".nav-btn">Home</button>
-  <button data-target="rsvp" class=".nav-btn">RSVP</button>
-  <button data-target="suggest" class=".nav-btn">Suggest & Vote</button>
-  <button data-target="rate" class=".nav-btn">Rate Our Books</button>
+  <button data-target="past-books">Home</button>
+  <button data-target="rsvp">RSVP</button>
+  <button data-target="suggest">Suggest & Vote</button>
+  <button data-target="rate">Rate Our Books</button>
 </div>
 
   <!-- Past Books carousel -->
