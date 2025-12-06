@@ -201,6 +201,59 @@
     table, th, td { font-size: 11pt; }
   }
 
+  
+.suggested-books-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: sans-serif;
+}
+
+.suggested-books-table th,
+.suggested-books-table td {
+  padding: 8px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.suggested-books-table th:nth-child(1),
+.suggested-books-table td:nth-child(1) {
+  width: 70%; /* Title column */
+}
+
+.suggested-books-table th:nth-child(2),
+.suggested-books-table td:nth-child(2),
+.suggested-books-table th:nth-child(3),
+.suggested-books-table td:nth-child(3) {
+  width: 15%; /* Votes columns */
+  text-align: center;
+}
+
+/* Style for the title links */
+.suggested-books-table a {
+  color: #4c1033; /* wine color */
+  text-decoration: none;
+}
+
+.suggested-books-table a:hover {
+  text-decoration: underline;
+}
+
+/* Vote buttons styling */
+.suggested-books-table button.vote-btn {
+  background-color: #4c1033; /* wine color */
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.suggested-books-table button.vote-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  color: #666;
+}
 </style>
 </head>
 <body>
