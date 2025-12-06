@@ -14,10 +14,10 @@ exports.handler = async function(event, context) {
     const sheets = google.sheets({ version: 'v4', auth });
     const spreadsheetId = '1-86BOIuWOeINJVJkNojHo-c1T3Ygxm1AgLyedEplgvY';
 
-    // Get the Title column (B) from the Book List tab
+    // Get the Title column (A) from the Book List tab
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Book List!B2:B' // skip header row
+      range: 'Book List!A2:A' // skip header row
     });
 
     const rows = res.data.values || [];
