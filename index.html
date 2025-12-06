@@ -405,7 +405,7 @@
   });
 
   // =======================
-  // Suggest & Vote Section
+  // Suggest & Vote
   // =======================
   const nomForm = document.getElementById('nomForm');
   const nomStatus = document.getElementById('nomStatus');
@@ -482,9 +482,11 @@
         voteBtn.textContent = 'Vote';
         voteBtn.className = 'submit-btn';
         voteBtn.style.fontWeight = '400';
+
         const nomId = item.id || item.ID || '';
         voteBtn.dataset.nomId = nomId;
         voteBtn.setAttribute('data-nom-id', nomId);
+
         setButtonDisabledVisual(voteBtn, getVotesLeft() <= 0);
 
         voteBtn.addEventListener('click', async function() {
@@ -495,6 +497,7 @@
           }
           const btn = this;
           const tVotesCell = tVotes;
+
           const payload = { submitted: btn.dataset.nomId || item.title };
           setButtonDisabledVisual(btn, true);
           const prevText = btn.textContent;
@@ -616,46 +619,44 @@
     try {
       const books = await fetch('/.netlify/functions/getBookList').then(r => r.json());
       bookSelect.innerHTML = '';
+
+      if (!books || !books.length) {
+        const option = document.createElement('option');
+        option.textContent = 'No books available';
+        option.value = '';
+        bookSelect.add(option);
+        return;
+      }
+
       books.forEach(book => {
         const option = document.createElement('option');
-        option.value = book; option.text = book;
+        option.value = book;
+        option.textContent = book;
         bookSelect.add(option);
       });
+
       refreshAverages();
-    } catch(e){ console.error('Error loading book list:', e); }
+    } catch (e) {
+      console.error('Error loading book list:', e);
+      bookSelect.innerHTML = '<option value="">Error loading books</option>';
+    }
   }
 
   async function refreshAverages() {
-  try {
-    const ratings = await fetch('/.netlify/functions/getRatings').then(r => r.json());
-
-    // Group ratings by book
-    const bookMap = {};
-    ratings.forEach(r => {
-      if (!bookMap[r.book]) bookMap[r.book] = [];
-      bookMap[r.book].push(r.rating);
-    });
-
-    // Calculate averages and counts
-    const avgTableBody = document.querySelector('#averages tbody');
-    avgTableBody.innerHTML = '';
-    Object.entries(bookMap).forEach(([book, bookRatings]) => {
-      const avg = bookRatings.reduce((a,b)=>a+b,0)/bookRatings.length;
-      const row = document.createElement('tr');
-
-      const bookCell = document.createElement('td'); bookCell.textContent = book;
-      const avgCell = document.createElement('td'); avgCell.innerHTML = '⭐'.repeat(Math.round(avg));
-      const countCell = document.createElement('td'); countCell.textContent = bookRatings.length;
-
-      row.appendChild(bookCell);
-      row.appendChild(avgCell);
-      row.appendChild(countCell);
-      avgTableBody.appendChild(row);
-    });
-  } catch(e) {
-    console.error('Error loading averages:', e);
+    try {
+      const averages = await fetch('/.netlify/functions/getAverages').then(r => r.json());
+      avgTableBody.innerHTML = '';
+      averages.sort((a,b)=>b.avg-a.avg);
+      averages.forEach(item => {
+        const row = document.createElement('tr');
+        const bookCell = document.createElement('td'); bookCell.textContent = item.book;
+        const avgCell = document.createElement('td'); avgCell.innerHTML = '⭐'.repeat(Math.round(item.avg));
+        const countCell = document.createElement('td'); countCell.textContent = item.count;
+        row.appendChild(bookCell); row.appendChild(avgCell); row.appendChild(countCell);
+        avgTableBody.appendChild(row);
+      });
+    } catch(e){ console.error('Error loading averages:', e); }
   }
-}
 
   populateBooks();
 
@@ -669,7 +670,7 @@
       await fetch('/.netlify/functions/submitRating', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ book, rating })
+        body: JSON.stringify({book, rating})
       });
       statusDiv.innerText="Rating submitted!";
       statusDiv.style.color="green";
@@ -681,6 +682,7 @@
     }
   });
 </script>
+
 
 
   
