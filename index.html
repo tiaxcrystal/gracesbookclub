@@ -262,7 +262,7 @@
 </div>
 
 
-  <script>
+ <script>
   // =======================
   // Navigation: switch active container
   // =======================
@@ -350,6 +350,15 @@
   }
   updateVotesLeftDisplay();
 
+  // new helper: set disabled state for all vote buttons based on votes left
+  function updateVoteButtonsState() {
+    const voteBtns = document.querySelectorAll('#nomsTable button[data-nom-id]');
+    const disabled = getVotesLeft() <= 0;
+    voteBtns.forEach(b => {
+      b.disabled = disabled;
+    });
+  }
+
   function validUrl(u) {
     try { const url = new URL(u); return url.protocol === 'http:' || url.protocol === 'https:'; } 
     catch(e) { return false; }
@@ -392,76 +401,73 @@
         voteBtn.textContent = 'Vote';
 
         // Make vote button match your form submit buttons exactly:
-        // same class + ensure normal font-weight (non-bold)
         voteBtn.className = 'submit-btn';
-        voteBtn.style.fontWeight = '400'; // ensure not bold
-        // ensure disabled styling is inherited from CSS
+        voteBtn.style.fontWeight = '400';
         voteBtn.disabled = getVotesLeft() <= 0;
 
         // Store the nomination id on the button for clarity
-        voteBtn.dataset.nomId = item.id || item.ID || '';
+        const nomId = item.id || item.ID || '';
+        voteBtn.dataset.nomId = nomId;
+        voteBtn.setAttribute('data-nom-id', nomId); // used by updateVoteButtonsState selector
 
-      // Replace the vote click handler with this function (inside loadNoms where voteBtn is created)
-voteBtn.addEventListener('click', async function() {
-  if (getVotesLeft() <= 0) {
-    alert('No votes left.');
-    return;
-  }
+        voteBtn.addEventListener('click', async function() {
+          if (getVotesLeft() <= 0) {
+            alert('No votes left.');
+            return;
+          }
+          const btn = this;
+          const tVotesCell = tVotes;
 
-  const nomId = this.dataset.nomId || item.id || item.ID || '';
-  const payload = { submitted: nomId || item.title };
+          const payload = { submitted: btn.dataset.nomId || item.title };
+          btn.disabled = true;
+          btn.textContent = 'Voting…';
 
-  // show immediate UI feedback
-  voteBtn.disabled = true;
-  voteBtn.textContent = 'Voting…';
+          try {
+            const resp = await fetch('/.netlify/functions/addVote', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
 
-  try {
-    const resp = await fetch('/.netlify/functions/addVote', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+            // read response content
+            const text = await resp.text();
+            let json = null;
+            try { json = JSON.parse(text); } catch(e){ json = null; }
 
-    // Read response body regardless of status
-    const text = await resp.text();
-    let json = null;
-    try { json = JSON.parse(text); } catch(e) { json = null; }
+            if (!resp.ok) {
+              const msg = (json && (json.error || json.message)) || text || `Server error ${resp.status}`;
+              alert('Could not register vote: ' + msg);
+              btn.disabled = getVotesLeft() <= 0; // restore disabled state properly
+              btn.textContent = 'Vote';
+              updateVoteButtonsState();
+              return;
+            }
 
-    if (!resp.ok) {
-      console.error('Vote function returned non-OK:', resp.status, text);
-      const msg = (json && (json.error || json.message)) || text || `Server error ${resp.status}`;
-      alert('Could not register vote: ' + msg);
-      // restore button label
-      voteBtn.disabled = false;
-      voteBtn.textContent = 'Vote';
-      return;
-    }
+            // success
+            const current = parseInt(sessionStorage.getItem('votesCast') || '0', 10);
+            sessionStorage.setItem('votesCast', (current + 1).toString());
+            updateVotesLeftDisplay();
 
-    // success path: parse JSON response
-    const result = json || { success: true };
-    // increment client-side votes count
-    const current = parseInt(sessionStorage.getItem('votesCast') || '0', 10);
-    sessionStorage.setItem('votesCast', (current + 1).toString());
-    updateVotesLeftDisplay();
+            // optimistic visual update of votes cell
+            try {
+              const currentVotesNum = parseInt(tVotesCell.textContent || '0', 10);
+              if (!isNaN(currentVotesNum)) tVotesCell.textContent = currentVotesNum + 1;
+            } catch(e){ /* ignore */ }
 
-    // optimistic UI update
-    try {
-      const votesCell = tVotes;
-      const currentVotesNum = parseInt(votesCell.textContent || '0', 10);
-      if (!isNaN(currentVotesNum)) votesCell.textContent = currentVotesNum + 1;
-    } catch(e) { /* ignore */ }
-
-    // reload authoritative data
-    loadNoms();
-
-  } catch (err) {
-    console.error('Network / fetch error when voting:', err);
-    alert('Could not register vote — network error.');
-    voteBtn.disabled = false;
-    voteBtn.textContent = 'Vote';
-  }
-});
-
+            // after vote, disable buttons if needed and reload authoritative data
+            updateVoteButtonsState();
+            loadNoms();
+          } catch (err) {
+            console.error('Error submitting vote:', err);
+            alert('Could not register vote — network error.');
+            btn.disabled = getVotesLeft() <= 0;
+            btn.textContent = 'Vote';
+            updateVoteButtonsState();
+          } finally {
+            // ensure label resets if still enabled and not "Voting…"
+            if (!btn.disabled) btn.textContent = 'Vote';
+          }
+        });
 
         tAction.appendChild(voteBtn);
 
@@ -472,6 +478,10 @@ voteBtn.addEventListener('click', async function() {
         tr.appendChild(tAction);
         nomsBody.appendChild(tr);
       });
+
+      // ensure all vote buttons reflect the current votes left
+      updateVoteButtonsState();
+
     } catch(e) {
       console.error('Error loading nominations:', e);
       nomsBody.innerHTML = '<tr><td colspan="5">Error loading nominations.</td></tr>';
