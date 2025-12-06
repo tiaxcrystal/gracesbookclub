@@ -405,7 +405,7 @@
   });
 
   // =======================
-  // Suggest & Vote (simplified: no author/genre inputs; send blanks to sheet)
+  // Suggest & Vote Section
   // =======================
   const nomForm = document.getElementById('nomForm');
   const nomStatus = document.getElementById('nomStatus');
@@ -424,7 +424,6 @@
     votesLeftSpan.textContent = getVotesLeft();
   }
 
-  // Visual disabled helper (adds/removes .disabled class so CSS can style it)
   function setButtonDisabledVisual(btn, disabled) {
     btn.disabled = !!disabled;
     if (disabled) {
@@ -442,7 +441,7 @@
     voteBtns.forEach(b => setButtonDisabledVisual(b, disabled));
   }
 
-  updateVotesLeftDisplay(); // initial display
+  updateVotesLeftDisplay();
 
   function validUrl(u) {
     try { const url = new URL(u); return url.protocol === 'http:' || url.protocol === 'https:'; } 
@@ -466,7 +465,6 @@
       data.forEach(item => {
         const tr = document.createElement('tr');
 
-        // Title with link
         const tTitle = document.createElement('td');
         const a = document.createElement('a');
         a.href = item.link || '#';
@@ -475,26 +473,18 @@
         a.textContent = item.title || '';
         tTitle.appendChild(a);
 
-        // Votes column
         const tVotes = document.createElement('td');
         tVotes.textContent = (typeof item.votes === 'number') ? item.votes : (item.votes || 0);
 
-        // Action (vote) - uses stable ID
         const tAction = document.createElement('td');
         const voteBtn = document.createElement('button');
         voteBtn.type = 'button';
         voteBtn.textContent = 'Vote';
-
-        // Match submit button look & ensure normal font weight
         voteBtn.className = 'submit-btn';
         voteBtn.style.fontWeight = '400';
-
-        // Store the nomination id on the button
         const nomId = item.id || item.ID || '';
         voteBtn.dataset.nomId = nomId;
         voteBtn.setAttribute('data-nom-id', nomId);
-
-        // initial disabled state
         setButtonDisabledVisual(voteBtn, getVotesLeft() <= 0);
 
         voteBtn.addEventListener('click', async function() {
@@ -505,8 +495,6 @@
           }
           const btn = this;
           const tVotesCell = tVotes;
-
-          // Payload: send ID if available; send blank author/genre on nomination submission (below)
           const payload = { submitted: btn.dataset.nomId || item.title };
           setButtonDisabledVisual(btn, true);
           const prevText = btn.textContent;
@@ -532,18 +520,15 @@
               return;
             }
 
-            // success: increment session votes and update UI
             const current = parseInt(sessionStorage.getItem('votesCast') || '0', 10);
             sessionStorage.setItem('votesCast', (current + 1).toString());
             updateVotesLeftDisplay();
 
-            // optimistic update votes count in-cell
             try {
               const currentVotesNum = parseInt(tVotesCell.textContent || '0', 10);
               if (!isNaN(currentVotesNum)) tVotesCell.textContent = currentVotesNum + 1;
-            } catch(e){ /* ignore */ }
+            } catch(e){}
 
-            // after voting, disable all buttons if votes exhausted and reload authoritative data
             updateVoteButtonsState();
             await loadNoms();
           } catch (err) {
@@ -563,7 +548,6 @@
         nomsBody.appendChild(tr);
       });
 
-      // ensure all vote buttons reflect the current votes left
       updateVoteButtonsState();
 
     } catch(e) {
@@ -573,12 +557,10 @@
     }
   }
 
-  // initial load + refresh interval
   updateVotesLeftDisplay();
   loadNoms();
   setInterval(loadNoms, 5000);
 
-  // Submission: now only sends title + link; server will receive empty author/genre
   nomForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     nomStatus.textContent = '';
@@ -605,7 +587,6 @@
     nomStatus.style.color = '#4c1033';
 
     try {
-      // send author and genre as blank strings so sheet layout remains unchanged
       await fetch('/.netlify/functions/submitNomination', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -646,10 +627,30 @@
 
   async function refreshAverages() {
     try {
-      const averages = await fetch('/.netlify/functions/getAverages').then(r => r.json());
+      const averages = await fetch('/.netlify/functions/getRatings').then(r => r.json());
       avgTableBody.innerHTML = '';
-      averages.sort((a,b)=>b.avg-a.avg);
-      averages.forEach(item => {
+      const grouped = {};
+
+      // Aggregate ratings per book
+      averages.forEach(entry => {
+        const b = entry.book;
+        const r = parseFloat(entry.rating);
+        if (!b || isNaN(r)) return;
+        if (!grouped[b]) grouped[b] = { sum: 0, count: 0 };
+        grouped[b].sum += r;
+        grouped[b].count += 1;
+      });
+
+      const result = Object.keys(grouped).map(b => ({
+        book: b,
+        avg: grouped[b].sum / grouped[b].count,
+        count: grouped[b].count
+      }));
+
+      // Sort by average descending
+      result.sort((a,b)=>b.avg-a.avg);
+
+      result.forEach(item => {
         const row = document.createElement('tr');
         const bookCell = document.createElement('td'); bookCell.textContent = item.book;
         const avgCell = document.createElement('td'); avgCell.innerHTML = '⭐'.repeat(Math.round(item.avg));
@@ -672,7 +673,7 @@
       await fetch('/.netlify/functions/submitRating', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({book, rating})
+        body: JSON.stringify({ book, rating })
       });
       statusDiv.innerText="Rating submitted!";
       statusDiv.style.color="green";
