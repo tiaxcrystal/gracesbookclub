@@ -9,13 +9,9 @@ exports.handler = async function(event, context) {
     const { book, rating } = JSON.parse(event.body);
 
     if (!book || !rating) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Book and rating are required.' })
-      };
+      return { statusCode: 400, body: JSON.stringify({ error: 'Book and rating required.' }) };
     }
 
-    // Load Google service account credentials from environment
     const auth = new google.auth.GoogleAuth({
       credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT),
       scopes: ['https://www.googleapis.com/auth/spreadsheets']
@@ -24,26 +20,19 @@ exports.handler = async function(event, context) {
     const sheets = google.sheets({ version: 'v4', auth });
     const spreadsheetId = process.env.RATINGS_SPREADSHEET_ID;
 
-    // Append row: book | rating
+    // Append a new row: Timestamp will auto-fill in Google Sheets
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: 'Form Responses 1!A:B',
+      range: 'Ratings!A:C',
       valueInputOption: 'USER_ENTERED',
       resource: {
-        values: [[book, rating]]
+        values: [[new Date().toISOString(), book, rating]]
       }
     });
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ success: true })
-    };
-
+    return { statusCode: 200, body: JSON.stringify({ success: true }) };
   } catch (err) {
     console.error(err);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Could not submit rating.' })
-    };
+    return { statusCode: 500, body: JSON.stringify({ error: 'Could not submit rating.' }) };
   }
 };
