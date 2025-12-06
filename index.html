@@ -219,44 +219,28 @@
   </table>
 </div>
 
-<!-- Suggest & Vote Container -->
+<!-- Suggest & Vote Container (simplified: no Author, no Genre) -->
 <div id="suggest" class="container">
   <h2>Suggest a Book</h2>
   <form id="nomForm" novalidate>
     <input id="title" name="title" type="text" placeholder="Title" required><br>
-    <input id="author" name="author" type="text" placeholder="Author" required><br>
-    <select id="genre" name="genre" required>
-      <option value="" disabled selected>Select Genre</option>
-      <option>Adventure</option>
-      <option>Biography/Memoir</option>
-      <option>Fantasy</option>
-      <option>Historical Fiction</option>
-      <option>History (Non-Fiction)</option>
-      <option>Horror</option>
-      <option>Mystery</option>
-      <option>Thriller/Suspense</option>
-      <option>Romance</option>
-      <option>Romantasy</option>
-      <option>Sci-Fi</option>
-      <option>True Crime</option>
-      <option>Western</option>
-      <option>Other Fiction</option>
-      <option>Other Non-Fiction</option>
-    </select><br>
     <input id="link" name="link" type="url" placeholder="Goodreads link (must start with http:// or https://)" required><br>
     <button id="submitBtn" type="submit" class="submit-btn">Submit</button>
     <div id="nomStatus" class="note" aria-live="polite"></div>
   </form>
+
   <div class="divider"></div>
+
   <h2>Suggested Books</h2>
   <p id="voteNotice" class="note">You have <span id="votesLeft">3</span> votes remaining.</p>
   <table id="nomsTable" aria-live="polite">
     <thead>
-      <tr><th>Title</th><th>Author</th><th>Genre</th><th>Votes</th><th>Action</th></tr>
+      <tr><th>Title</th><th>Votes</th><th>Action</th></tr>
     </thead>
     <tbody></tbody>
   </table>
 </div>
+
 
 <!-- Rate Our Books Container -->
 <div id="rate" class="container">
@@ -354,7 +338,7 @@
   });
 
   // =======================
-  // Suggest & Vote
+  // Suggest & Vote (simplified: no author/genre inputs; send blanks to sheet)
   // =======================
   const nomForm = document.getElementById('nomForm');
   const nomStatus = document.getElementById('nomStatus');
@@ -373,7 +357,7 @@
     votesLeftSpan.textContent = getVotesLeft();
   }
 
-  // New: toggle visual style + disabled property for buttons
+  // Visual disabled helper (adds/removes .disabled class so CSS can style it)
   function setButtonDisabledVisual(btn, disabled) {
     btn.disabled = !!disabled;
     if (disabled) {
@@ -391,7 +375,7 @@
     voteBtns.forEach(b => setButtonDisabledVisual(b, disabled));
   }
 
-  updateVotesLeftDisplay(); // initial
+  updateVotesLeftDisplay(); // initial display
 
   function validUrl(u) {
     try { const url = new URL(u); return url.protocol === 'http:' || url.protocol === 'https:'; } 
@@ -407,8 +391,8 @@
       nomsBody.innerHTML = '';
 
       if (!data || !data.length) {
-        nomsBody.innerHTML = '<tr><td colspan="5">No nominations yet.</td></tr>';
-        updateVoteButtonsState(); // ensure state consistent even when empty
+        nomsBody.innerHTML = '<tr><td colspan="3">No nominations yet.</td></tr>';
+        updateVoteButtonsState();
         return;
       }
 
@@ -424,10 +408,9 @@
         a.textContent = item.title || '';
         tTitle.appendChild(a);
 
-        // Other columns
-        const tAuthor = document.createElement('td'); tAuthor.textContent = item.author || '';
-        const tGenre = document.createElement('td'); tGenre.textContent = item.genre || '';
-        const tVotes = document.createElement('td'); tVotes.textContent = (typeof item.votes === 'number') ? item.votes : (item.votes || 0);
+        // Votes column
+        const tVotes = document.createElement('td');
+        tVotes.textContent = (typeof item.votes === 'number') ? item.votes : (item.votes || 0);
 
         // Action (vote) - uses stable ID
         const tAction = document.createElement('td');
@@ -435,32 +418,31 @@
         voteBtn.type = 'button';
         voteBtn.textContent = 'Vote';
 
-        // Make vote button match your form submit buttons exactly:
+        // Match submit button look & ensure normal font weight
         voteBtn.className = 'submit-btn';
         voteBtn.style.fontWeight = '400';
 
-        // Store the nomination id on the button for clarity (empty string allowed)
+        // Store the nomination id on the button
         const nomId = item.id || item.ID || '';
         voteBtn.dataset.nomId = nomId;
         voteBtn.setAttribute('data-nom-id', nomId);
 
-        // set initial disabled state using helper
+        // initial disabled state
         setButtonDisabledVisual(voteBtn, getVotesLeft() <= 0);
 
         voteBtn.addEventListener('click', async function() {
           if (getVotesLeft() <= 0) {
             alert('No votes left.');
-            // ensure all buttons reflect the state
             updateVoteButtonsState();
             return;
           }
           const btn = this;
           const tVotesCell = tVotes;
 
+          // Payload: send ID if available; send blank author/genre on nomination submission (below)
           const payload = { submitted: btn.dataset.nomId || item.title };
-          // Immediately disable clicked button to avoid double clicks
           setButtonDisabledVisual(btn, true);
-          const previousText = btn.textContent;
+          const prevText = btn.textContent;
           btn.textContent = 'Voting…';
 
           try {
@@ -477,36 +459,31 @@
             if (!resp.ok) {
               const msg = (json && (json.error || json.message)) || text || `Server error ${resp.status}`;
               alert('Could not register vote: ' + msg);
-              // restore clicked button state (but respect global disabled)
               setButtonDisabledVisual(btn, getVotesLeft() <= 0);
-              btn.textContent = previousText;
+              btn.textContent = prevText;
               updateVoteButtonsState();
               return;
             }
 
-            // success — increment session votes and UI
+            // success: increment session votes and update UI
             const current = parseInt(sessionStorage.getItem('votesCast') || '0', 10);
             sessionStorage.setItem('votesCast', (current + 1).toString());
             updateVotesLeftDisplay();
 
-            // optimistic visual update of votes cell
+            // optimistic update votes count in-cell
             try {
               const currentVotesNum = parseInt(tVotesCell.textContent || '0', 10);
               if (!isNaN(currentVotesNum)) tVotesCell.textContent = currentVotesNum + 1;
             } catch(e){ /* ignore */ }
 
-            // After voting, disable all buttons if votes exhausted
+            // after voting, disable all buttons if votes exhausted and reload authoritative data
             updateVoteButtonsState();
-
-            // And refresh authoritative data (recreates buttons and reapplies disabled state)
             await loadNoms();
-
           } catch (err) {
             console.error('Error submitting vote:', err);
             alert('Could not register vote — network error.');
-            // restore clicked button state
             setButtonDisabledVisual(btn, getVotesLeft() <= 0);
-            btn.textContent = previousText;
+            btn.textContent = prevText;
             updateVoteButtonsState();
           }
         });
@@ -514,8 +491,6 @@
         tAction.appendChild(voteBtn);
 
         tr.appendChild(tTitle);
-        tr.appendChild(tAuthor);
-        tr.appendChild(tGenre);
         tr.appendChild(tVotes);
         tr.appendChild(tAction);
         nomsBody.appendChild(tr);
@@ -526,16 +501,17 @@
 
     } catch(e) {
       console.error('Error loading nominations:', e);
-      nomsBody.innerHTML = '<tr><td colspan="5">Error loading nominations.</td></tr>';
+      nomsBody.innerHTML = '<tr><td colspan="3">Error loading nominations.</td></tr>';
       updateVoteButtonsState();
     }
   }
 
-  // initial load + periodic refresh
+  // initial load + refresh interval
   updateVotesLeftDisplay();
   loadNoms();
   setInterval(loadNoms, 5000);
 
+  // Submission: now only sends title + link; server will receive empty author/genre
   nomForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     nomStatus.textContent = '';
@@ -543,11 +519,9 @@
     submitBtn.disabled = true;
 
     const title = document.getElementById('title').value.trim();
-    const author = document.getElementById('author').value.trim();
-    const genre = document.getElementById('genre').value.trim();
     const link = document.getElementById('link').value.trim();
 
-    if (!title || !author || !genre || !link) {
+    if (!title || !link) {
       nomStatus.textContent = 'Please complete all fields.';
       nomStatus.classList.add('error');
       submitBtn.disabled = false;
@@ -564,10 +538,11 @@
     nomStatus.style.color = '#4c1033';
 
     try {
+      // send author and genre as blank strings so sheet layout remains unchanged
       await fetch('/.netlify/functions/submitNomination', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, author, genre, link })
+        body: JSON.stringify({ title, author: '', genre: '', link })
       });
       nomStatus.textContent = 'Thanks — nomination added!';
       nomStatus.style.color = '#4c1033';
