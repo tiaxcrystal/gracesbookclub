@@ -12,7 +12,7 @@ exports.handler = async function(event, context) {
     });
 
     const sheets = google.sheets({ version: 'v4', auth });
-    const spreadsheetId = process.env.SUGGEST_SPREADSHEET_ID; // Book List spreadsheet
+    const spreadsheetId = process.env.RATINGS_SPREADSHEET_ID; // Book List spreadsheet
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range: 'Book List!A:A' // column A contains titles
