@@ -5,29 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Grace's Book Club</title>
 
-  <link rel="icon" href="https://drive.google.com/file/d/1wTpKGRyyPZ4pDU13rmkcx6kfugDEB0bj/view?usp=sharing" type="image/x-icon">
-<!-- Optional: if you're using a PNG -->
+<link rel="icon" href="https://drive.google.com/file/d/1wTpKGRyyPZ4pDU13rmkcx6kfugDEB0bj/view?usp=sharing" type="image/x-icon">
 <link rel="icon" href="https://drive.google.com/file/d/1wumFBEoSMXZsdHhkcUhdg1dYNuB3a0qx/view?usp=sharing" type="image/png">
 
 <style>
-  html, body {
-    margin: 0;
-    font-family: "Times New Roman", Times, serif;
-    background-color: #fff5f8;
-  }
+html, body {
+  margin: 0;
+  font-family: "Times New Roman", Times, serif;
+  background-color: #fff5f8;
+}
 
- /* Wine-colored links for the Suggested Books table */
-  .suggested-books-table a {
-    color: #7a0c26;        /* your wine color */
-    text-decoration: none; /* remove underline normally */
-    font-weight: 500;
-  }
+/* Wine-colored links for Suggested Books table */
+.suggested-books-table a {
+  color: #7a0c26;
+  text-decoration: none;
+  font-weight: 500;
+}
+.suggested-books-table a:hover { text-decoration: underline; }
 
-  .suggested-books-table a:hover {
-    text-decoration: underline;
-  }
-  
-/* Ensure disabled buttons look grayed and match your UI */
+/* Disabled button style */
 .submit-btn:disabled,
 .submit-btn.disabled {
   background-color: #aaa !important;
@@ -36,213 +32,148 @@
   box-shadow: none !important;
   opacity: 0.85;
 }
+.submit-btn:not(:disabled):hover { transform: translateY(-1px); }
 
-/* Optional: subtle transform so active buttons still pop */
-.submit-btn:not(:disabled):hover {
-  transform: translateY(-1px);
+/* Navigation bar */
+.nav-bar {
+  display: flex;
+  justify-content: center;
+  background-color: #eec2cd;
+  padding: 12px 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
-  
-  /* Top nav */
-  .nav-bar {
-    display: flex;
-    font-family: "Times New Roman", Times, serif;
-    justify-content: center;
-    background-color: #eec2cd;
-    padding: 12px 0;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  }
-  .nav-bar button {
-    margin: 0 8px;
-    padding: 12px 26px;
-    font-size: 1em;
-    border-radius: 6px;
-    border: none;
-    font-family: "Times New Roman", Times, serif;
-    cursor: pointer;
-    transition: all 0.18s;
-    background-color: #eec2cd;
-    color: black;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  }
-  .nav-bar button:hover {
-    background-color: #4c1033;
-    font-family: "Times New Roman", Times, serif;
-    color: white;
-  }
+.nav-bar button {
+  margin: 0 8px;
+  padding: 12px 26px;
+  font-size: 1em;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.18s;
+  background-color: #eec2cd;
+  color: black;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+.nav-bar button:hover {
+  background-color: #4c1033;
+  color: white;
+}
 
-  /* Form containers */
-  .container {
-    background: white;
-    padding: 25px 30px;
-    border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    text-align: center;
-    font-family: "Times New Roman", Times, serif;
-    width: 90%;
-    max-width: 700px;
-    margin: 30px auto;
-    display: none; /* hidden by default */
-  }
+/* Containers */
+.container {
+  background: white;
+  padding: 25px 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  text-align: center;
+  width: 90%;
+  max-width: 700px;
+  margin: 30px auto;
+  display: none;
+}
+.container.active { display: block; }
 
-  .container.active {
-    display: block;
-  }
+h2 { color: #4c1033; font-size: 30pt; margin-bottom: 10px; }
 
-  h2 {
-    color: #4c1033;
-    font-size: 30pt;
-    font-family: "Times New Roman", Times, serif;
-    margin-bottom: 10px;
-  }
+.note { font-size: 11pt; color: #666; margin-top: 6px; }
 
-  .note {
-    font-size: 11pt;
-    color: #666;
-    font-family: "Times New Roman", Times, serif;
-    margin-top: 6px;
-  }
-
-  input, select {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 8px 10px;
-    margin: 6px 0;
-    font-size: 12pt;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    font-family: "Times New Roman", Times, serif;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-  }
-
-  button.submit-btn {
-    margin-top: 12px;
-    margin-bottom: 16px;
-    background-color: #eec2cd;
-    color: black;
-    border: none;
-    cursor: pointer;
-    transition: all 0.18s;
-    padding: 12px 26px;
-    font-size: 1.05em;
-    border-radius: 6px;
-    font-family: "Times New Roman", Times, serif;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  }
-  button.submit-btn:hover {
-    background-color: #4c1033;
-    font-family: "Times New Roman", Times, serif;
-    color: white;
-  }
-
-  .divider {
-    width: 50%;
-    height: 1px;
-    background: #e6e6e6;
-    margin: 12px auto 10px;
-    border-radius: 2px;
-  }
-
-  table {
-    margin: 18px auto;
-    border-collapse: separate;
-    border-radius: 6px;
-    overflow: hidden;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    width: 100%;
-    font-family: "Times New Roman", Times, serif;
-    table-layout: fixed;
-    word-wrap: break-word;
-  }
-
-  th {
-    background-color: #4c1033;
-    color: white;
-    font-weight: bold;
-    font-family: "Times New Roman", Times, serif;
-    font-size: 14pt;
-    text-align: left;
-    padding: 10px 12px;
-  }
-  th:first-child { border-top-left-radius:6px; }
-  th:last-child { border-top-right-radius:6px; }
-
-  td {
-    padding: 8px 12px;
-    vertical-align: middle;
-    font-size: 12pt;
-    text-align: left;
-    word-wrap: break-word;
-  }
-
-  tbody tr:nth-child(even) { background: #f2f2f2; }
-  tbody tr:nth-child(odd) { background: white; }
-  tbody tr:hover { background: #ffe6eb; }
-
-  .stars {
-    display: flex;
-    flex-direction: row-reverse;
-    justify-content: center;
-    margin-top: 10px;
-  }
-  .stars input { display: none; }
-  .stars label {
-    font-size: 3em;
-    color: #ccc;
-    cursor: pointer;
-    transition: transform 0.2s, color 0.2s;
-    user-select: none;
-  }
-  .stars input:checked ~ label,
-  .stars label:hover,
-  .stars label:hover ~ label {
-    color: gold;
-    transform: scale(1.2);
-  }
-
-  @media (max-width: 700px) {
-    h2 { font-size: 24pt; }
-    input, select, button.submit-btn { font-size: 11pt; padding: 8px 16px; }
-    table, th, td { font-size: 11pt; }
-  }
-
-  
-.suggested-books-table {
+/* Inputs & selects match width */
+input, select {
   width: 100%;
-  border-collapse: collapse;
-    font-family: "Times New Roman", Times, serif;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  margin: 6px 0;
+  font-size: 12pt;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  font-family: "Times New Roman", Times, serif;
 }
 
-.suggested-books-table th,
-.suggested-books-table td {
-  padding: 8px;
+button.submit-btn {
+  margin-top: 12px;
+  margin-bottom: 16px;
+  background-color: #eec2cd;
+  color: black;
+  border: none;
+  cursor: pointer;
+  transition: all 0.18s;
+  padding: 12px 26px;
+  font-size: 1.05em;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+button.submit-btn:hover {
+  background-color: #4c1033;
+  color: white;
+}
+
+.divider {
+  width: 50%;
+  height: 1px;
+  background: #e6e6e6;
+  margin: 12px auto 10px;
+  border-radius: 2px;
+}
+
+/* Tables */
+table {
+  margin: 18px auto;
+  border-collapse: separate;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  width: 100%;
+  table-layout: fixed;
+  word-wrap: break-word;
+}
+th {
+  background-color: #4c1033;
+  color: white;
+  font-weight: bold;
+  font-size: 14pt;
   text-align: left;
+  padding: 10px 12px;
+}
+th:first-child { border-top-left-radius:6px; }
+th:last-child { border-top-right-radius:6px; }
+td {
+  padding: 8px 12px;
   vertical-align: middle;
+  font-size: 12pt;
+  text-align: left;
+  word-wrap: break-word;
+}
+tbody tr:nth-child(even) { background: #f2f2f2; }
+tbody tr:nth-child(odd) { background: white; }
+tbody tr:hover { background: #ffe6eb; }
+
+/* Stars for rating */
+.stars { display: flex; flex-direction: row-reverse; justify-content: center; margin-top: 10px; }
+.stars input { display: none; }
+.stars label {
+  font-size: 3em;
+  color: #ccc;
+  cursor: pointer;
+  transition: transform 0.2s, color 0.2s;
+  user-select: none;
+}
+.stars input:checked ~ label,
+.stars label:hover,
+.stars label:hover ~ label {
+  color: gold;
+  transform: scale(1.2);
 }
 
+/* Suggested books table column widths */
 .suggested-books-table th:nth-child(1),
-.suggested-books-table td:nth-child(1) {
-  width: 70%; /* Title column bigger */
-}
-
+.suggested-books-table td:nth-child(1) { width: 70%; }
 .suggested-books-table th:nth-child(2),
 .suggested-books-table td:nth-child(2),
 .suggested-books-table th:nth-child(3),
-.suggested-books-table td:nth-child(3) {
-  width: 30%; /* Votes columns smaller */
-  text-align: center;
-}
+.suggested-books-table td:nth-child(3) { width: 30%; text-align: center; }
 
-/* Style for the title links */
-.suggested-books-table a {
-  color: #4c1033; /* wine color */
-  text-decoration: none;
-}
-
-.suggested-books-table a:hover {
-  text-decoration: underline;
-}
-
-/* Vote buttons styling (match other site buttons) */
+/* Vote buttons */
 .suggested-books-table button.vote-btn {
   background-color: #eec2cd;
   color: black;
@@ -255,159 +186,34 @@
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 .suggested-books-table button.vote-btn:hover { background-color: #4c1033; color: white; }
+.suggested-books-table button.vote-btn:disabled { background-color: #ccc; cursor: not-allowed; color: #666; }
 
-.suggested-books-table button.vote-btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-  color: #666;
-}
-
-/* ===== Past Books Carousel styles (single slide visible) ===== */
-.past-books-section.container {
-  /* Use same container sizing as others */
-  width: 90%;
-  max-width: 900px;
-  margin: 30px auto;
-}
-
-.past-books-section h2 {
-  margin: 0 0 14px 0;
-  font-size: 26pt;
-  color: #4c1033;
-  text-align: center;
-}
-
-.carousel {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.carousel-track-wrapper {
-  overflow: hidden;
-  flex: 1 1 auto;
-  border-radius: 12px;
-  background: white;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-}
-
-.carousel-track {
-  display: flex;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-  transition: transform 0.45s cubic-bezier(.25,.8,.25,1);
-  gap: 0; /* no gap so single slide fits exactly */
-}
-
-/* --- Carousel: prevent cropping, keep square slides --- */
-
-/* Slide container kept square */
-.carousel-slide {
-  /* prefer CSS aspect-ratio */
-  aspect-ratio: 1 / 1;      /* forces a square frame */
-  width: 260px;             /* controls visible slide width on larger screens */
-  max-width: 32vw;          /* responsive cap */
-  flex: 0 0 auto;
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;        /* keep rounded corners */
-}
-
-/* Fallback for browsers without aspect-ratio support */
-.carousel-slide--fallback {
-  position: relative;
-  width: 260px;
-  max-width: 32vw;
-}
-.carousel-slide--fallback::before {
-  content: "";
-  display: block;
-  padding-top: 100%; /* 1:1 aspect ratio */
-}
-
-/* Image rules: never crop, keep centered, letterbox as needed */
-.carousel-slide img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;    /* show whole image, no crop */
-  object-position: center;
-  display: block;
-  background: #fff;       /* fills letterbox area — change if you want a different background */
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
-}
-
-/* If you need images to keep their original pixel size but fit inside the square:
-   use these instead of width/height 100% (optional)
-.carousel-slide img {
-  max-width: 100%;
-  max-height: 100%;
-  margin: auto;
-  object-fit: contain;
-}
-*/
-
-/* Slight responsive tweak for small screens */
+/* Responsive tweaks */
 @media (max-width: 700px) {
-  .carousel-slide { width: 210px; max-width: 60vw; aspect-ratio: 1/1; }
-  .carousel-slide--fallback { width: 210px; }
-  .carousel-slide img { height: 100%; }
+  h2 { font-size: 24pt; }
+  input, select, button.submit-btn { font-size: 11pt; padding: 8px 16px; }
+  table, th, td { font-size: 11pt; }
 }
 
-
-.carousel-caption {
-  padding: 12px;
-  text-align: left;
-  font-size: 1rem;
-  color: #4c1033;
-  background: white;
-  border-bottom-left-radius: 8px;
-  border-bottom-right-radius: 8px;
-}
-
-.carousel-caption a.title-link {
-  color: #4c1033;
-  text-decoration: none;
-  font-weight: 600;
-}
+/* Past Books Carousel */
+.past-books-section.container { width: 90%; max-width: 900px; margin: 30px auto; }
+.past-books-section h2 { margin: 0 0 14px 0; font-size: 26pt; color: #4c1033; text-align: center; }
+.carousel { display: flex; align-items: center; gap: 12px; }
+.carousel-track-wrapper { overflow: hidden; flex: 1 1 auto; border-radius: 12px; background: white; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+.carousel-track { display: flex; padding: 0; margin: 0; list-style: none; transition: transform 0.45s cubic-bezier(.25,.8,.25,1); }
+.carousel-slide { aspect-ratio: 1/1; width: 260px; max-width: 32vw; flex: 0 0 auto; display: flex; align-items: stretch; justify-content: center; background: white; border-radius: 8px; overflow: hidden; }
+.carousel-slide img { width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; background: #fff; border-top-left-radius: 8px; border-top-right-radius: 8px; }
+.carousel-caption { padding: 12px; text-align: left; font-size: 1rem; color: #4c1033; background: white; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
+.carousel-caption a.title-link { color: #4c1033; text-decoration: none; font-weight: 600; }
 .carousel-caption a.title-link:hover { text-decoration: underline; }
-
-.carousel-caption .month {
-  display: block;
-  margin-top: 6px;
-  font-size: 0.95rem;
-  color: #666;
-}
-
-/* buttons */
-.carousel-btn {
-  background: #eec2cd;
-  border: none;
-  color: black;
-  padding: 10px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-}
+.carousel-caption .month { display: block; margin-top: 6px; font-size: 0.95rem; color: #666; }
+.carousel-btn { background: #eec2cd; border: none; color: black; padding: 10px 12px; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.12); }
 .carousel-btn:hover { background: #4c1033; color: white; }
 .carousel-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-.small-btn {
-  background: transparent;
-  border: 1px solid #eec2cd;
-  padding: 6px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-family: "Times New Roman", Times, serif;
-}
+.small-btn { background: transparent; border: 1px solid #eec2cd; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-family: "Times New Roman", Times, serif; }
 .small-btn:hover { background: #eec2cd; }
-
-/* responsive */
 @media (max-width: 700px) {
+  .carousel-slide { width: 210px; max-width: 60vw; aspect-ratio: 1/1; }
   .carousel-slide img { height: 220px; }
   .past-books-section h2 { font-size: 20pt; }
 }
@@ -422,27 +228,21 @@
   <button data-target="rate">Rate Our Books</button>
 </div>
 
-  <!-- Past Books carousel now IS a container and is active (home page) -->
 <section id="past-books" class="past-books-section container active">
   <h2>Past Books</h2>
   <div class="carousel" aria-roledescription="carousel">
     <button class="carousel-btn prev" aria-label="Previous book">◀</button>
-
     <div class="carousel-track-wrapper">
       <ul class="carousel-track" aria-live="polite"></ul>
     </div>
-
     <button class="carousel-btn next" aria-label="Next book">▶</button>
   </div>
-
   <div class="carousel-controls">
     <button id="carousel-play" class="small-btn" aria-pressed="false">Play</button>
     <button id="carousel-pause" class="small-btn" aria-pressed="true" style="display:none">Pause</button>
   </div>
 </section>
 
-
-<!-- RSVP Container (not active by default) -->
 <div id="rsvp" class="container">
   <h2>RSVP</h2>
   <form id="rsvpForm">
@@ -461,7 +261,6 @@
   </table>
 </div>
 
-<!-- Suggest & Vote Container (simplified: no Author, no Genre) -->
 <div id="suggest" class="container">
   <h2>Suggest a Book</h2>
   <form id="nomForm" novalidate>
@@ -472,10 +271,8 @@
   </form>
 
   <div class="divider"></div>
-
   <h2>Suggested Books</h2>
   <p id="voteNotice" class="note">You have <span id="votesLeft">3</span> votes remaining.</p>
- 
   <table id="nomsTable" aria-live="polite" class="suggested-books-table">
     <thead>
       <tr><th>Title</th><th colspan="2"></th></tr>
@@ -484,13 +281,11 @@
   </table>
 </div>
 
-<!-- Rate Our Books Container -->
 <div id="rate" class="container">
   <h2>Rate Our Books</h2>
   <form id="ratingForm">
     <label for="book">Select Book:</label>
     <select id="book" name="book"></select>
-
     <label>Rating:</label>
     <div class="stars">
       <input type="radio" id="star5" name="rating" value="5"><label for="star5">&#9733;</label>
@@ -499,7 +294,6 @@
       <input type="radio" id="star2" name="rating" value="2"><label for="star2">&#9733;</label>
       <input type="radio" id="star1" name="rating" value="1"><label for="star1">&#9733;</label>
     </div>
-
     <button type="submit" class="submit-btn">Submit</button>
   </form>
   <div id="status" class="note"></div>
@@ -512,516 +306,187 @@
 </div>
 
 <script>
-  // =======================
-  // Navigation: switch active container
-  // =======================
-  const navButtons = document.querySelectorAll('.nav-bar button');
-  const containers = document.querySelectorAll('.container');
+// ===== Navigation =====
+const navButtons = document.querySelectorAll('.nav-bar button');
+const containers = document.querySelectorAll('.container');
+navButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.target;
+    containers.forEach(c => c.classList.remove('active'));
+    document.getElementById(target)?.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
 
-  navButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const target = btn.getAttribute('data-target');
-      containers.forEach(c => c.classList.remove('active'));
-      const el = document.getElementById(target);
-      if (el) {
-        el.classList.add('active');
-        // small UX: scroll to top of container
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+// ===== RSVP =====
+const rsvpForm = document.getElementById('rsvpForm');
+const rsvpTableBody = document.querySelector('#rsvp-table tbody');
+const meetingDate = document.getElementById('meeting-date');
+const meetingTheme = document.getElementById('meeting-theme');
+
+async function loadRSVPs() {
+  try {
+    const data = await fetch('/.netlify/functions/getRSVPs').then(r => r.json());
+    rsvpTableBody.innerHTML = '';
+    data.reverse().forEach(entry => {
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${entry.name}</td><td>${entry.bringing}</td>`;
+      rsvpTableBody.appendChild(row);
     });
-  });
+  } catch(e){ console.error(e); }
+}
 
-  // =======================
-  // RSVP Section
-  // =======================
-  const rsvpForm = document.getElementById('rsvpForm');
-  const rsvpTableBody = document.querySelector('#rsvp-table tbody');
-  const meetingDate = document.getElementById('meeting-date');
-  const meetingTheme = document.getElementById('meeting-theme');
+async function loadMeetingInfo() {
+  try {
+    const info = await fetch('/.netlify/functions/getMeetingInfo').then(r=>r.json());
+    meetingDate.textContent = `Date: ${info.date}`;
+    meetingTheme.textContent = `Theme: ${info.theme}`;
+  } catch(e){ console.error(e); }
+}
 
-  async function loadRSVPs() {
-    try {
-      const data = await fetch('/.netlify/functions/getRSVPs').then(r => r.json());
-      rsvpTableBody.innerHTML = '';
-      data.reverse().forEach(entry => {
-        const row = document.createElement('tr');
-        const nameCell = document.createElement('td'); nameCell.textContent = entry.name;
-        const bringingCell = document.createElement('td'); bringingCell.textContent = entry.bringing;
-        row.appendChild(nameCell); row.appendChild(bringingCell);
-        rsvpTableBody.appendChild(row);
-      });
-    } catch(e) { console.error('Error loading RSVPs:', e); }
-  }
+loadRSVPs(); loadMeetingInfo();
+setInterval(()=>{loadRSVPs(); loadMeetingInfo();},5000);
 
-  async function loadMeetingInfo() {
-    try {
-      const info = await fetch('/.netlify/functions/getMeetingInfo').then(r => r.json());
-      meetingDate.textContent = `Date: ${info.date}`;
-      meetingTheme.textContent = `Theme: ${info.theme}`;
-    } catch(e) { console.error('Error loading meeting info:', e); }
-  }
+rsvpForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  const name = rsvpForm.name.value.trim();
+  const bringing = rsvpForm.bringing.value.trim();
+  if(!name||!bringing) return;
+  try {
+    await fetch('/.netlify/functions/addRSVP',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,bringing})});
+    rsvpForm.reset(); loadRSVPs();
+  } catch(err){ console.error(err); }
+});
 
-  loadRSVPs();
-  loadMeetingInfo();
-  setInterval(() => { loadRSVPs(); loadMeetingInfo(); }, 5000);
+// ===== Suggest & Vote =====
+const nomForm = document.getElementById('nomForm');
+const nomStatus = document.getElementById('nomStatus');
+const nomsBody = document.querySelector('#nomsTable tbody');
+const submitBtn = document.getElementById('submitBtn');
+const votesLeftSpan = document.getElementById('votesLeft');
+const MAX_VOTES = 3;
+if(!sessionStorage.getItem('votesCast')) sessionStorage.setItem('votesCast','0');
+function getVotesLeft(){ return MAX_VOTES-parseInt(sessionStorage.getItem('votesCast')||'0',10); }
+function updateVotesLeftDisplay(){ votesLeftSpan.textContent=getVotesLeft(); }
+function setButtonDisabledVisual(btn, disabled){ btn.disabled=!!disabled; if(disabled){btn.classList.add('disabled'); btn.setAttribute('aria-disabled','true');} else{btn.classList.remove('disabled'); btn.removeAttribute('aria-disabled');} }
+function updateVoteButtonsState(){ document.querySelectorAll('#nomsTable button[data-nom-id]').forEach(b=>setButtonDisabledVisual(b,getVotesLeft()<=0)); }
+updateVotesLeftDisplay();
 
-  rsvpForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const name = this.name.value.trim();
-    const bringing = this.bringing.value.trim();
-    if (!name || !bringing) return;
-    try {
-      await fetch('/.netlify/functions/addRSVP', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, bringing })
-      });
-      this.reset();
-      loadRSVPs();
-    } catch (err) {
-      console.error('Error submitting RSVP:', err);
-    }
-  });
+// URL validation
+function validUrl(u){try{const url=new URL(u);return url.protocol==='http:'||url.protocol==='https:';}catch(e){return false;}}
 
-  // =======================
-  // Suggest & Vote
-  // =======================
-  const nomForm = document.getElementById('nomForm');
-  const nomStatus = document.getElementById('nomStatus');
-  const nomsBody = document.querySelector('#nomsTable tbody');
-  const submitBtn = document.getElementById('submitBtn');
-  const votesLeftSpan = document.getElementById('votesLeft');
-  const MAX_VOTES = 3;
+// Load nominations
+async function loadNoms(){
+  try{
+    const data = await fetch('/.netlify/functions/getNominations').then(r=>{if(!r.ok)throw new Error('Network error');return r.json();});
+    nomsBody.innerHTML='';
+    data.forEach((nom,idx)=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td><a href="${nom.link}" target="_blank" rel="noopener">${nom.title}</a></td>
+                     <td>${nom.votes}</td>
+                     <td><button data-nom-id="${idx}" class="vote-btn">Vote</button></td>`;
+      nomsBody.appendChild(tr);
+    });
+    updateVoteButtonsState();
+  }catch(e){console.error(e);}
+}
+loadNoms();
+setInterval(loadNoms,5000);
 
-  if (!sessionStorage.getItem('votesCast')) sessionStorage.setItem('votesCast', '0');
+nomForm.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const title=nomForm.title.value.trim();
+  const link=nomForm.link.value.trim();
+  if(!title||!validUrl(link)){ nomStatus.textContent='Please enter a valid title and URL'; return; }
+  try{
+    await fetch('/.netlify/functions/addNom',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,link})});
+    nomForm.reset(); nomStatus.textContent='Nomination submitted!'; loadNoms();
+  }catch(err){ console.error(err); nomStatus.textContent='Error submitting.';}
+});
 
-  function getVotesLeft() {
-    return MAX_VOTES - parseInt(sessionStorage.getItem('votesCast') || '0', 10);
-  }
+// Voting
+nomsBody.addEventListener('click',async e=>{
+  if(!e.target.matches('button[data-nom-id]')) return;
+  const votesLeft = getVotesLeft();
+  if(votesLeft<=0) return;
+  const idx = e.target.dataset.nomId;
+  try{
+    await fetch('/.netlify/functions/vote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idx})});
+    sessionStorage.setItem('votesCast', (parseInt(sessionStorage.getItem('votesCast')||'0',10)+1).toString());
+    updateVotesLeftDisplay(); loadNoms();
+  }catch(err){ console.error(err);}
+});
 
-  function updateVotesLeftDisplay() {
-    votesLeftSpan.textContent = getVotesLeft();
-  }
+// ===== Rate =====
+const ratingForm = document.getElementById('ratingForm');
+const bookSelect = document.getElementById('book');
+const avgTableBody = document.querySelector('#averages tbody');
+async function loadBooks(){ try{
+  const data = await fetch('/.netlify/functions/getPastBooks').then(r=>r.json());
+  bookSelect.innerHTML='';
+  data.forEach(b=>{ const opt=document.createElement('option'); opt.value=b.title; opt.textContent=b.title; bookSelect.appendChild(opt); });
+} catch(e){console.error(e);} }
+async function loadAverages(){ try{
+  const data = await fetch('/.netlify/functions/getRatings').then(r=>r.json());
+  avgTableBody.innerHTML='';
+  data.forEach(d=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${d.book}</td><td>${d.average}</td><td>${d.count}</td>`; avgTableBody.appendChild(tr); });
+} catch(e){console.error(e);} }
+loadBooks(); loadAverages();
+setInterval(()=>{ loadBooks(); loadAverages(); },5000);
+ratingForm.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const book=bookSelect.value;
+  const rating=parseInt(ratingForm.rating.value,10);
+  if(!book||!rating) return;
+  try{
+    await fetch('/.netlify/functions/addRating',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({book,rating})});
+    ratingForm.reset(); loadAverages();
+  }catch(err){ console.error(err);}
+});
 
-  function setButtonDisabledVisual(btn, disabled) {
-    btn.disabled = !!disabled;
-    if (disabled) {
-      btn.classList.add('disabled');
-      btn.setAttribute('aria-disabled', 'true');
-    } else {
-      btn.classList.remove('disabled');
-      btn.removeAttribute('aria-disabled');
-    }
-  }
-
-  function updateVoteButtonsState() {
-    const voteBtns = document.querySelectorAll('#nomsTable button[data-nom-id]');
-    const disabled = getVotesLeft() <= 0;
-    voteBtns.forEach(b => setButtonDisabledVisual(b, disabled));
-  }
-
-  updateVotesLeftDisplay();
-
-  function validUrl(u) {
-    try { const url = new URL(u); return url.protocol === 'http:' || url.protocol === 'https:'; } 
-    catch(e) { return false; }
-  }
-
-  async function loadNoms() {
-    try {
-      const data = await fetch('/.netlify/functions/getNominations').then(r => {
-        if (!r.ok) throw new Error('Network response not ok');
-        return r.json();
-      });
-      nomsBody.innerHTML = '';
-
-      if (!data || !data.length) {
-        nomsBody.innerHTML = '<tr><td colspan="3">No nominations yet.</td></tr>';
-        updateVoteButtonsState();
-        return;
-      }
-
-      data.forEach(item => {
-        const tr = document.createElement('tr');
-
-        const tTitle = document.createElement('td');
-        const a = document.createElement('a');
-        a.href = item.link || '#';
-        a.target = '_blank';
-        a.rel = 'noopener';
-        a.textContent = item.title || '';
-        tTitle.appendChild(a);
-
-        const tVotes = document.createElement('td');
-        tVotes.textContent = (typeof item.votes === 'number') ? item.votes : (item.votes || 0);
-
-        const tAction = document.createElement('td');
-        const voteBtn = document.createElement('button');
-        voteBtn.type = 'button';
-        voteBtn.textContent = 'Vote';
-        voteBtn.className = 'submit-btn';
-        voteBtn.style.fontWeight = '400';
-
-        const nomId = item.id || item.ID || '';
-        voteBtn.dataset.nomId = nomId;
-        voteBtn.setAttribute('data-nom-id', nomId);
-
-        setButtonDisabledVisual(voteBtn, getVotesLeft() <= 0);
-
-        voteBtn.addEventListener('click', async function() {
-          if (getVotesLeft() <= 0) {
-            alert('No votes left.');
-            updateVoteButtonsState();
-            return;
-          }
-          const btn = this;
-          const tVotesCell = tVotes;
-
-          const payload = { submitted: btn.dataset.nomId || item.title };
-          setButtonDisabledVisual(btn, true);
-          const prevText = btn.textContent;
-          btn.textContent = 'Voting…';
-
-          try {
-            const resp = await fetch('/.netlify/functions/addVote', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            });
-
-            const text = await resp.text();
-            let json = null;
-            try { json = JSON.parse(text); } catch(e){ json = null; }
-
-            if (!resp.ok) {
-              const msg = (json && (json.error || json.message)) || text || `Server error ${resp.status}`;
-              alert('Could not register vote: ' + msg);
-              setButtonDisabledVisual(btn, getVotesLeft() <= 0);
-              btn.textContent = prevText;
-              updateVoteButtonsState();
-              return;
-            }
-
-            const current = parseInt(sessionStorage.getItem('votesCast') || '0', 10);
-            sessionStorage.setItem('votesCast', (current + 1).toString());
-            updateVotesLeftDisplay();
-
-            try {
-              const currentVotesNum = parseInt(tVotesCell.textContent || '0', 10);
-              if (!isNaN(currentVotesNum)) tVotesCell.textContent = currentVotesNum + 1;
-            } catch(e){}
-
-            updateVoteButtonsState();
-            await loadNoms();
-          } catch (err) {
-            console.error('Error submitting vote:', err);
-            alert('Could not register vote — network error.');
-            setButtonDisabledVisual(btn, getVotesLeft() <= 0);
-            btn.textContent = prevText;
-            updateVoteButtonsState();
-          }
-        });
-
-        tAction.appendChild(voteBtn);
-
-        tr.appendChild(tTitle);
-        tr.appendChild(tVotes);
-        tr.appendChild(tAction);
-        nomsBody.appendChild(tr);
-      });
-
-      updateVoteButtonsState();
-
-    } catch(e) {
-      console.error('Error loading nominations:', e);
-      nomsBody.innerHTML = '<tr><td colspan="3">Error loading nominations.</td></tr>';
-      updateVoteButtonsState();
-    }
-  }
-
-  updateVotesLeftDisplay();
-  loadNoms();
-  setInterval(loadNoms, 5000);
-
-  nomForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    nomStatus.textContent = '';
-    nomStatus.classList.remove('error');
-    submitBtn.disabled = true;
-
-    const title = document.getElementById('title').value.trim();
-    const link = document.getElementById('link').value.trim();
-
-    if (!title || !link) {
-      nomStatus.textContent = 'Please complete all fields.';
-      nomStatus.classList.add('error');
-      submitBtn.disabled = false;
-      return;
-    }
-    if (!validUrl(link)) {
-      nomStatus.textContent = 'Please enter a valid URL (include http:// or https://).';
-      nomStatus.classList.add('error');
-      submitBtn.disabled = false;
-      return;
-    }
-
-    nomStatus.textContent = 'Submitting nomination…';
-    nomStatus.style.color = '#4c1033';
-
-    try {
-      await fetch('/.netlify/functions/submitNomination', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, author: '', genre: '', link })
-      });
-      nomStatus.textContent = 'Thanks — nomination added!';
-      nomStatus.style.color = '#4c1033';
-      nomForm.reset();
-      loadNoms();
-    } catch(e) {
-      nomStatus.textContent = 'Error: Could not add nomination.';
-      nomStatus.classList.add('error');
-      console.error(e);
-    } finally {
-      submitBtn.disabled = false;
-    }
-  });
-
-  // =======================
-  // Rate Our Books
-  // =======================
-  const bookSelect = document.getElementById('book');
-  const statusDiv = document.getElementById('status');
-  const avgTableBody = document.querySelector('#averages tbody');
-
-  async function populateBooks() {
-    try {
-      const books = await fetch('/.netlify/functions/getBookList').then(r => r.json());
-      bookSelect.innerHTML = '';
-
-      if (!books || !books.length) {
-        const option = document.createElement('option');
-        option.textContent = 'No books available';
-        option.value = '';
-        bookSelect.add(option);
-        return;
-      }
-
-      books.forEach(book => {
-        const option = document.createElement('option');
-        option.value = book;
-        option.textContent = book;
-        bookSelect.add(option);
-      });
-
-      refreshAverages();
-    } catch (e) {
-      console.error('Error loading book list:', e);
-      bookSelect.innerHTML = '<option value="">Error loading books</option>';
-    }
-  }
-
-  async function refreshAverages() {
-    try {
-      const averages = await fetch('/.netlify/functions/getAverages').then(r => r.json());
-      avgTableBody.innerHTML = '';
-      averages.sort((a,b)=>b.avg-a.avg);
-      averages.forEach(item => {
-        const row = document.createElement('tr');
-        const bookCell = document.createElement('td'); bookCell.textContent = item.book;
-        const avgCell = document.createElement('td'); avgCell.innerHTML = '⭐'.repeat(Math.round(item.avg));
-        const countCell = document.createElement('td'); countCell.textContent = item.count;
-        row.appendChild(bookCell); row.appendChild(avgCell); row.appendChild(countCell);
-        avgTableBody.appendChild(row);
-      });
-    } catch(e){ console.error('Error loading averages:', e); }
-  }
-
-  populateBooks();
-
-  document.getElementById('ratingForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const rating = document.querySelector('input[name="rating"]:checked')?.value;
-    const book = bookSelect.value;
-    if(!rating){ statusDiv.innerText="Please select a star rating!"; statusDiv.style.color="red"; return; }
-    statusDiv.innerText="Submitting rating…"; statusDiv.style.color="#4c1033";
-    try {
-      await fetch('/.netlify/functions/submitRating', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({book, rating})
-      });
-      statusDiv.innerText="Rating submitted!";
-      statusDiv.style.color="green";
-      document.querySelectorAll('input[name="rating"]').forEach(input=>input.checked=false);
-      refreshAverages();
-    } catch(e) {
-      statusDiv.innerText="Error submitting rating!";
-      statusDiv.style.color="red";
-    }
-  });
-
-  // ===== Past Books carousel frontend (ONE slide visible) =====
-(async function initPastBooksCarousel() {
+// ===== Past Books Carousel =====
+(async function initPastBooksCarousel(){
   const track = document.querySelector('.carousel-track');
   const prevBtn = document.querySelector('.carousel-btn.prev');
   const nextBtn = document.querySelector('.carousel-btn.next');
   const playBtn = document.getElementById('carousel-play');
   const pauseBtn = document.getElementById('carousel-pause');
-
-  if (!track) return; // nothing to do
-
+  if(!track) return;
   const PLACEHOLDER = '/favicon.ico';
+  let items=[];
+  try{ items = await fetch('/.netlify/functions/getPastBooks').then(r=>r.json()); }catch(err){ console.error(err); track.innerHTML='<li>Could not load past books.</li>'; return; }
+  if(!items.length){ track.innerHTML='<li>No past books yet.</li>'; return; }
 
-  let items = [];
-  try {
-    items = await fetch('/.netlify/functions/getPastBooks').then(r => {
-      if (!r.ok) throw new Error('Failed to fetch past books');
-      return r.json();
-    });
-  } catch (err) {
-    console.error('Could not load past books', err);
-    track.innerHTML = '<li style="padding:20px;">Could not load past books.</li>';
-    return;
-  }
-
-  if (!items.length) {
-    track.innerHTML = '<li style="padding:20px;">No past books yet.</li>';
-    return;
-  }
-
-  // create slides
-  items.forEach((it, idx) => {
-    const li = document.createElement('li');
-    li.className = 'carousel-slide';
-    li.setAttribute('data-index', idx);
-
-    const imgUrl = it.picture || it.pictureLink || PLACEHOLDER;
-    const imgWrap = document.createElement('a');
-    imgWrap.href = it.pictureLink || it.link || '#';
-    imgWrap.target = '_blank';
-    imgWrap.rel = 'noopener';
-
-    const img = document.createElement('img');
-    img.src = imgUrl;
-    img.alt = it.title || 'Book cover';
-    imgWrap.appendChild(img);
-
-    const caption = document.createElement('div');
-    caption.className = 'carousel-caption';
-
-    const titleLink = document.createElement('a');
-    titleLink.className = 'title-link';
-    titleLink.href = it.link || '#';
-    titleLink.target = '_blank';
-    titleLink.rel = 'noopener';
-    titleLink.textContent = it.title || '(no title)';
-
-    const monthSpan = document.createElement('span');
-    monthSpan.className = 'month';
-    monthSpan.textContent = it.month || '';
-
+  items.forEach((it,idx)=>{
+    const li=document.createElement('li'); li.className='carousel-slide'; li.dataset.index=idx;
+    const imgWrap=document.createElement('a'); imgWrap.href=it.link||'#'; imgWrap.target='_blank'; imgWrap.rel='noopener';
+    const img=document.createElement('img'); img.src=it.picture||PLACEHOLDER; img.alt=it.title||'Book cover'; imgWrap.appendChild(img);
+    const caption=document.createElement('div'); caption.className='carousel-caption';
+    const titleLink=document.createElement('a'); titleLink.className='title-link'; titleLink.href=it.link||'#'; titleLink.target='_blank'; titleLink.rel='noopener'; titleLink.textContent=it.title||'(no title)';
     caption.appendChild(titleLink);
-    if (it.month) caption.appendChild(monthSpan);
-
-    li.appendChild(imgWrap);
-    li.appendChild(caption);
-
-    track.appendChild(li);
+    if(it.month){ const monthSpan=document.createElement('span'); monthSpan.className='month'; monthSpan.textContent=it.month; caption.appendChild(monthSpan);}
+    li.appendChild(imgWrap); li.appendChild(caption); track.appendChild(li);
   });
 
-  let slideIndex = 0;
-  const slides = Array.from(track.children);
+  let slideIndex=0;
+  const slides=Array.from(track.children);
+  function updateTrackPosition(){ const wrapper=track.parentElement; const wrapperWidth=wrapper.getBoundingClientRect().width; const offset=slideIndex*wrapperWidth; track.style.transform=`translateX(-${offset}px)`; prevBtn.disabled=(slideIndex===0); nextBtn.disabled=(slideIndex>=slides.length-1); }
+  function nextSlide(){ slideIndex=(slideIndex<slides.length-1)?slideIndex+1:0; updateTrackPosition(); }
+  function prevSlide(){ slideIndex=(slideIndex>0)?slideIndex-1:slides.length-1; updateTrackPosition(); }
+  prevBtn.addEventListener('click',prevSlide); nextBtn.addEventListener('click',nextSlide);
+  document.addEventListener('keydown',e=>{ if(e.key==='ArrowLeft') prevSlide(); if(e.key==='ArrowRight') nextSlide(); if(e.key===' '||e.key==='Spacebar'){ e.preventDefault(); toggleAutoplay(); } });
+  let autoplay=false, timer=null; const INTERVAL=5000;
+  function startAutoplay(){ if(timer) clearInterval(timer); timer=setInterval(nextSlide,INTERVAL); autoplay=true; playBtn.style.display='none'; pauseBtn.style.display=''; playBtn.setAttribute('aria-pressed','true'); pauseBtn.setAttribute('aria-pressed','false'); }
+  function stopAutoplay(){ if(timer) clearInterval(timer); timer=null; autoplay=false; playBtn.style.display=''; pauseBtn.style.display='none'; playBtn.setAttribute('aria-pressed','false'); pauseBtn.setAttribute('aria-pressed','true'); }
+  function toggleAutoplay(){ autoplay?stopAutoplay():startAutoplay(); }
+  playBtn.addEventListener('click',startAutoplay); pauseBtn.addEventListener('click',stopAutoplay);
 
-  function updateTrackPosition() {
-    const wrapper = track.parentElement;
-    const wrapperWidth = wrapper.getBoundingClientRect().width;
-    const offset = slideIndex * wrapperWidth;
-    track.style.transform = `translateX(-${offset}px)`;
-    prevBtn.disabled = (slideIndex === 0);
-    nextBtn.disabled = (slideIndex >= slides.length - 1);
-  }
-
-  function nextSlide() {
-    if (slideIndex < slides.length - 1) slideIndex++;
-    else slideIndex = 0;
-    updateTrackPosition();
-  }
-  function prevSlide() {
-    if (slideIndex > 0) slideIndex--;
-    else slideIndex = slides.length - 1;
-    updateTrackPosition();
-  }
-
-  prevBtn.addEventListener('click', prevSlide);
-  nextBtn.addEventListener('click', nextSlide);
-
-  // keyboard control
-  document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowLeft') prevSlide();
-    if (e.key === 'ArrowRight') nextSlide();
-    if (e.key === ' ' || e.key === 'Spacebar') {
-      e.preventDefault();
-      toggleAutoplay();
-    }
+  let imagesLoaded=0;
+  slides.forEach(slide=>{
+    const img=slide.querySelector('img'); if(!img){ imagesLoaded++; return; }
+    if(img.complete){ imagesLoaded++; if(imagesLoaded===slides.length) updateTrackPosition(); }
+    else{ img.addEventListener('load',()=>{ imagesLoaded++; if(imagesLoaded===slides.length) updateTrackPosition(); }); img.addEventListener('error',()=>{ imagesLoaded++; if(imagesLoaded===slides.length) updateTrackPosition(); }); }
   });
-
-   // autoplay (disabled by default)
-  let autoplay = false;
-  const INTERVAL = 5000;
-  let timer = null;
-
-  function startAutoplay() {
-    if (timer) clearInterval(timer);
-    timer = setInterval(() => nextSlide(), INTERVAL);
-    autoplay = true;
-    playBtn.style.display = 'none';
-    pauseBtn.style.display = '';
-    playBtn.setAttribute('aria-pressed', 'true');
-    pauseBtn.setAttribute('aria-pressed', 'false');
-  }
-  function stopAutoplay() {
-    if (timer) clearInterval(timer);
-    timer = null;
-    autoplay = false;
-    playBtn.style.display = '';
-    pauseBtn.style.display = 'none';
-    playBtn.setAttribute('aria-pressed', 'false');
-    pauseBtn.setAttribute('aria-pressed', 'true');
-  }
-  function toggleAutoplay() {
-    if (autoplay) stopAutoplay(); else startAutoplay();
-  }
-
-  playBtn.addEventListener('click', startAutoplay);
-  pauseBtn.addEventListener('click', stopAutoplay);
-
-  // initial layout after images load
-  ...
-  // do NOT auto-start; leave paused so user must click Play to begin
-  // startAutoplay();
-
-
-  // wait for images to settle then set position
-  let imagesLoaded = 0;
-  slides.forEach(slide => {
-    const img = slide.querySelector('img');
-    if (!img) { imagesLoaded++; return; }
-    if (img.complete) {
-      imagesLoaded++;
-      if (imagesLoaded === slides.length) updateTrackPosition();
-    } else {
-      img.addEventListener('load', () => {
-        imagesLoaded++;
-        if (imagesLoaded === slides.length) updateTrackPosition();
-      });
-      img.addEventListener('error', () => {
-        imagesLoaded++;
-        if (imagesLoaded === slides.length) updateTrackPosition();
-      });
-    }
-  });
-
   startAutoplay();
 })();
 </script>
