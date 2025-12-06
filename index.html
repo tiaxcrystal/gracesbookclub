@@ -626,40 +626,36 @@
   }
 
   async function refreshAverages() {
-    try {
-      const averages = await fetch('/.netlify/functions/getRatings').then(r => r.json());
-      avgTableBody.innerHTML = '';
-      const grouped = {};
+  try {
+    const ratings = await fetch('/.netlify/functions/getRatings').then(r => r.json());
 
-      // Aggregate ratings per book
-      averages.forEach(entry => {
-        const b = entry.book;
-        const r = parseFloat(entry.rating);
-        if (!b || isNaN(r)) return;
-        if (!grouped[b]) grouped[b] = { sum: 0, count: 0 };
-        grouped[b].sum += r;
-        grouped[b].count += 1;
-      });
+    // Group ratings by book
+    const bookMap = {};
+    ratings.forEach(r => {
+      if (!bookMap[r.book]) bookMap[r.book] = [];
+      bookMap[r.book].push(r.rating);
+    });
 
-      const result = Object.keys(grouped).map(b => ({
-        book: b,
-        avg: grouped[b].sum / grouped[b].count,
-        count: grouped[b].count
-      }));
+    // Calculate averages and counts
+    const avgTableBody = document.querySelector('#averages tbody');
+    avgTableBody.innerHTML = '';
+    Object.entries(bookMap).forEach(([book, bookRatings]) => {
+      const avg = bookRatings.reduce((a,b)=>a+b,0)/bookRatings.length;
+      const row = document.createElement('tr');
 
-      // Sort by average descending
-      result.sort((a,b)=>b.avg-a.avg);
+      const bookCell = document.createElement('td'); bookCell.textContent = book;
+      const avgCell = document.createElement('td'); avgCell.innerHTML = '⭐'.repeat(Math.round(avg));
+      const countCell = document.createElement('td'); countCell.textContent = bookRatings.length;
 
-      result.forEach(item => {
-        const row = document.createElement('tr');
-        const bookCell = document.createElement('td'); bookCell.textContent = item.book;
-        const avgCell = document.createElement('td'); avgCell.innerHTML = '⭐'.repeat(Math.round(item.avg));
-        const countCell = document.createElement('td'); countCell.textContent = item.count;
-        row.appendChild(bookCell); row.appendChild(avgCell); row.appendChild(countCell);
-        avgTableBody.appendChild(row);
-      });
-    } catch(e){ console.error('Error loading averages:', e); }
+      row.appendChild(bookCell);
+      row.appendChild(avgCell);
+      row.appendChild(countCell);
+      avgTableBody.appendChild(row);
+    });
+  } catch(e) {
+    console.error('Error loading averages:', e);
   }
+}
 
   populateBooks();
 
