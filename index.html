@@ -272,6 +272,10 @@
   color: #4c1033;
 }
 
+  /* allow the past-books section to be shown/hidden like the other containers */
+.past-books-section { display: none; }
+.past-books-section.active { display: block; }
+
 .past-books-section h2 {
   margin: 0 0 14px 0;
   font-size: 26pt;
@@ -455,8 +459,8 @@
 </div>
 
   <!-- Past Books carousel -->
-<section id="past-books" class="past-books-section">
-  <h2>Past Books</h2>
+<section id="past-books" class="past-books-section active">
+  <h2>What We're Reading</h2>Scroll to view the books we have read in previous months.
   <div class="carousel" aria-roledescription="carousel">
     <button class="carousel-btn prev" aria-label="Previous book">◀</button>
 
@@ -475,7 +479,7 @@
 
 
 <!-- RSVP Container -->
-<div id="rsvp" class="container active">
+<div id="rsvp" class="container">
   <h2>RSVP</h2>
   <form id="rsvpForm">
     <input type="text" name="name" placeholder="Your name" required><br>
@@ -548,19 +552,26 @@
 
 
 <script>
-  // =======================
-  // Navigation: switch active container
-  // =======================
-  const navButtons = document.querySelectorAll('.nav-bar button');
-  const containers = document.querySelectorAll('.container');
+// =======================
+// Navigation: switch active container (updated to include the past-books section)
+// =======================
+const navButtons = document.querySelectorAll('.nav-bar button');
+// include both normal .container pages and the past-books homepage section
+const containers = document.querySelectorAll('.container, .past-books-section');
 
-  navButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const target = btn.getAttribute('data-target');
-      containers.forEach(c => c.classList.remove('active'));
-      document.getElementById(target).classList.add('active');
-    });
+navButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.getAttribute('data-target');
+    // remove active from all toggleable pages
+    containers.forEach(c => c.classList.remove('active'));
+    // add active to the selected target (if it exists)
+    const el = document.getElementById(target);
+    if (el) el.classList.add('active');
+    // optionally: move focus to first focusable control in the newly active page for accessibility
+    // const firstInput = el?.querySelector('input, button, a, select, textarea');
+    // firstInput?.focus();
   });
+});
 
   // =======================
   // RSVP Section
