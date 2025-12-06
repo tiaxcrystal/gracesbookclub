@@ -12,22 +12,20 @@ exports.handler = async function(event, context) {
     });
 
     const sheets = google.sheets({ version: 'v4', auth });
-    const spreadsheetId = process.env.BOOKLIST_SPREADSHEET_ID;
-
-    // Read column A from "Book List"
+    const spreadsheetId = process.env.SUGGEST_SPREADSHEET_ID; // Book List spreadsheet
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Book List!A:A'
+      range: 'Book List!A:A' // column A contains titles
     });
 
     const rows = response.data.values || [];
 
-    // Remove header row
-    const titles = rows.slice(1).map(r => r[0]).filter(Boolean);
+    // Skip header row and remove any empty rows
+    const books = rows.slice(1).map(r => r[0]).filter(Boolean);
 
     return {
       statusCode: 200,
-      body: JSON.stringify(titles)
+      body: JSON.stringify(books)
     };
   } catch (err) {
     console.error('Error fetching book list:', err);
