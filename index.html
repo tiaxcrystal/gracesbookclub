@@ -258,15 +258,148 @@
   cursor: not-allowed;
   color: #666;
 }
+
+  /* Past Books Carousel styles */
+.past-books-section {
+  width: 90%;
+  max-width: 1000px;
+  margin: 40px auto;
+  font-family: "Times New Roman", Times, serif;
+  color: #4c1033;
+}
+
+.past-books-section h2 {
+  margin: 0 0 14px 0;
+  font-size: 26pt;
+  color: #4c1033;
+  text-align: center;
+}
+
+.carousel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.carousel-track-wrapper {
+  overflow: hidden;
+  flex: 1 1 auto;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.carousel-track {
+  display: flex;
+  padding: 12px;
+  margin: 0;
+  list-style: none;
+  transition: transform 0.45s cubic-bezier(.25,.8,.25,1);
+  gap: 12px;
+}
+
+.carousel-slide {
+  min-width: 260px; /* controls visible slide width */
+  max-width: 320px;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: white;
+  border-radius: 8px;
+}
+
+.carousel-slide img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.carousel-caption {
+  padding: 10px;
+  text-align: left;
+  font-size: 1rem;
+  color: #4c1033;
+  background: white;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.carousel-caption a.title-link {
+  color: #4c1033;
+  text-decoration: none;
+  font-weight: 600;
+}
+.carousel-caption a.title-link:hover { text-decoration: underline; }
+
+.carousel-caption .month {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.95rem;
+  color: #666;
+}
+
+/* buttons */
+.carousel-btn {
+  background: #eec2cd;
+  border: none;
+  color: black;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+.carousel-btn:hover { background: #4c1033; color: white; }
+
+.small-btn {
+  background: transparent;
+  border: 1px solid #eec2cd;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: "Times New Roman", Times, serif;
+}
+.small-btn:hover { background: #eec2cd; }
+
+/* responsive */
+@media (max-width: 700px) {
+  .carousel-slide { min-width: 210px; max-width: 260px; }
+  .carousel-slide img { height: 160px; }
+  .past-books-section h2 { font-size: 20pt; }
+}
+
 </style>
 </head>
 <body>
 
 <div class="nav-bar">
+  <button data-target="past-books">Home</button>
   <button data-target="rsvp">RSVP</button>
   <button data-target="suggest">Suggest & Vote</button>
   <button data-target="rate">Rate Our Books</button>
 </div>
+
+  <!-- Past Books carousel -->
+<section id="past-books" class="past-books-section">
+  <h2>Past Books</h2>
+  <div class="carousel" aria-roledescription="carousel">
+    <button class="carousel-btn prev" aria-label="Previous book">◀</button>
+
+    <div class="carousel-track-wrapper">
+      <ul class="carousel-track" aria-live="polite"></ul>
+    </div>
+
+    <button class="carousel-btn next" aria-label="Next book">▶</button>
+  </div>
+
+  <div class="carousel-controls">
+    <button id="carousel-play" class="small-btn" aria-pressed="false">Play</button>
+    <button id="carousel-pause" class="small-btn" aria-pressed="true" style="display:none">Pause</button>
+  </div>
+</section>
+
 
 <!-- RSVP Container -->
 <div id="rsvp" class="container active">
@@ -685,6 +818,198 @@
       statusDiv.style.color="red";
     }
   });
+
+  // Past Books carousel frontend
+(async function initPastBooksCarousel() {
+  const track = document.querySelector('.carousel-track');
+  const prevBtn = document.querySelector('.carousel-btn.prev');
+  const nextBtn = document.querySelector('.carousel-btn.next');
+  const playBtn = document.getElementById('carousel-play');
+  const pauseBtn = document.getElementById('carousel-pause');
+
+  if (!track) return; // nothing to do
+
+  // placeholder image if none provided
+  const PLACEHOLDER = '/favicon.ico'; // or any URL to a placeholder image
+
+  // fetch data
+  let items = [];
+  try {
+    items = await fetch('/.netlify/functions/getPastBooks').then(r => {
+      if (!r.ok) throw new Error('Failed to fetch past books');
+      return r.json();
+    });
+  } catch (err) {
+    console.error('Could not load past books', err);
+    track.innerHTML = '<li style="padding:20px;">Could not load past books.</li>';
+    return;
+  }
+
+  if (!items.length) {
+    track.innerHTML = '<li style="padding:20px;">No past books yet.</li>';
+    return;
+  }
+
+  // create slides
+  items.forEach((it, idx) => {
+    const li = document.createElement('li');
+    li.className = 'carousel-slide';
+    li.setAttribute('data-index', idx);
+
+    // image: prefer picture (column D) otherwise pictureLink (E) maybe contains URL, try both
+    const imgUrl = it.picture || it.pictureLink || PLACEHOLDER;
+    const imgWrap = document.createElement('a');
+    imgWrap.href = it.pictureLink || it.link || '#';
+    imgWrap.target = '_blank';
+    imgWrap.rel = 'noopener';
+
+    const img = document.createElement('img');
+    img.src = imgUrl;
+    img.alt = it.title || 'Book cover';
+    imgWrap.appendChild(img);
+
+    const caption = document.createElement('div');
+    caption.className = 'carousel-caption';
+
+    const titleLink = document.createElement('a');
+    titleLink.className = 'title-link';
+    titleLink.href = it.link || '#';
+    titleLink.target = '_blank';
+    titleLink.rel = 'noopener';
+    titleLink.textContent = it.title || '(no title)';
+
+    const monthSpan = document.createElement('span');
+    monthSpan.className = 'month';
+    monthSpan.textContent = it.month || '';
+
+    caption.appendChild(titleLink);
+    if (it.month) caption.appendChild(monthSpan);
+
+    li.appendChild(imgWrap);
+    li.appendChild(caption);
+
+    track.appendChild(li);
+  });
+
+  // carousel mechanics
+  let slideIndex = 0;
+  const slides = Array.from(track.children);
+  const visibleWidth = track.parentElement.clientWidth;
+  const slideGap = 12; // must match CSS gap
+  const slideWidths = slides.map(s => s.getBoundingClientRect().width + slideGap);
+
+  function updateTrackPosition() {
+    // compute offset so selected slide is left-aligned
+    let offset = 0;
+    for (let i = 0; i < slideIndex; i++) offset += slideWidths[i] || 0;
+    track.style.transform = `translateX(-${offset}px)`;
+    // disable/enable buttons if at ends
+    prevBtn.disabled = (slideIndex === 0);
+    nextBtn.disabled = (slideIndex >= slides.length - 1);
+  }
+
+  function nextSlide() {
+    if (slideIndex < slides.length - 1) {
+      slideIndex++;
+      updateTrackPosition();
+    } else {
+      // wrap
+      slideIndex = 0;
+      updateTrackPosition();
+    }
+  }
+  function prevSlide() {
+    if (slideIndex > 0) {
+      slideIndex--;
+      updateTrackPosition();
+    } else {
+      slideIndex = slides.length - 1;
+      updateTrackPosition();
+    }
+  }
+
+  prevBtn.addEventListener('click', prevSlide);
+  nextBtn.addEventListener('click', nextSlide);
+
+  // keyboard control
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft') prevSlide();
+    if (e.key === 'ArrowRight') nextSlide();
+    if (e.key === ' ' || e.key === 'Spacebar') { // space toggles play/pause
+      e.preventDefault();
+      toggleAutoplay();
+    }
+  });
+
+  // autoplay
+  let autoplay = true;
+  const INTERVAL = 5000;
+  let timer = null;
+
+  function startAutoplay() {
+    if (timer) clearInterval(timer);
+    timer = setInterval(() => nextSlide(), INTERVAL);
+    autoplay = true;
+    playBtn.style.display = 'none';
+    pauseBtn.style.display = '';
+    playBtn.setAttribute('aria-pressed', 'true');
+    pauseBtn.setAttribute('aria-pressed', 'false');
+  }
+  function stopAutoplay() {
+    if (timer) clearInterval(timer);
+    timer = null;
+    autoplay = false;
+    playBtn.style.display = '';
+    pauseBtn.style.display = 'none';
+    playBtn.setAttribute('aria-pressed', 'false');
+    pauseBtn.setAttribute('aria-pressed', 'true');
+  }
+  function toggleAutoplay() {
+    if (autoplay) stopAutoplay(); else startAutoplay();
+  }
+
+  playBtn.addEventListener('click', startAutoplay);
+  pauseBtn.addEventListener('click', stopAutoplay);
+
+  // initial layout after images load
+  function recalcWidths() {
+    const gap = slideGap;
+    const rects = slides.map(s => s.getBoundingClientRect().width + gap);
+    for (let i = 0; i < rects.length; i++) slideWidths[i] = rects[i];
+    updateTrackPosition();
+  }
+
+  // make sure to recalc after images load (they might be remote)
+  let imagesLoaded = 0;
+  slides.forEach(slide => {
+    const img = slide.querySelector('img');
+    if (!img) { imagesLoaded++; return; }
+    if (img.complete) {
+      imagesLoaded++;
+      if (imagesLoaded === slides.length) recalcWidths();
+    } else {
+      img.addEventListener('load', () => {
+        imagesLoaded++;
+        if (imagesLoaded === slides.length) recalcWidths();
+      });
+      img.addEventListener('error', () => {
+        imagesLoaded++;
+        if (imagesLoaded === slides.length) recalcWidths();
+      });
+    }
+  });
+
+  // start autoplay
+  startAutoplay();
+
+  // reflow on resize
+  window.addEventListener('resize', () => {
+    // small debounce
+    clearTimeout(window._pastBooksResize);
+    window._pastBooksResize = setTimeout(() => recalcWidths(), 120);
+  });
+})();
+
 </script>
 
 
