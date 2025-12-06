@@ -12,6 +12,21 @@
     background-color: #fff5f8;
   }
 
+/* Ensure disabled buttons look grayed and match your UI */
+.submit-btn:disabled,
+.submit-btn.disabled {
+  background-color: #aaa !important;
+  color: #666 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  opacity: 0.85;
+}
+
+/* Optional: subtle transform so active buttons still pop */
+.submit-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+  
   /* Top nav */
   .nav-bar {
     display: flex;
@@ -271,7 +286,7 @@
 </div>
 
 
- <script>
+<script>
   // =======================
   // Navigation: switch active container
   // =======================
@@ -357,16 +372,26 @@
   function updateVotesLeftDisplay() {
     votesLeftSpan.textContent = getVotesLeft();
   }
-  updateVotesLeftDisplay();
 
-  // new helper: set disabled state for all vote buttons based on votes left
+  // New: toggle visual style + disabled property for buttons
+  function setButtonDisabledVisual(btn, disabled) {
+    btn.disabled = !!disabled;
+    if (disabled) {
+      btn.classList.add('disabled');
+      btn.setAttribute('aria-disabled', 'true');
+    } else {
+      btn.classList.remove('disabled');
+      btn.removeAttribute('aria-disabled');
+    }
+  }
+
   function updateVoteButtonsState() {
     const voteBtns = document.querySelectorAll('#nomsTable button[data-nom-id]');
     const disabled = getVotesLeft() <= 0;
-    voteBtns.forEach(b => {
-      b.disabled = disabled;
-    });
+    voteBtns.forEach(b => setButtonDisabledVisual(b, disabled));
   }
+
+  updateVotesLeftDisplay(); // initial
 
   function validUrl(u) {
     try { const url = new URL(u); return url.protocol === 'http:' || url.protocol === 'https:'; } 
@@ -383,6 +408,7 @@
 
       if (!data || !data.length) {
         nomsBody.innerHTML = '<tr><td colspan="5">No nominations yet.</td></tr>';
+        updateVoteButtonsState(); // ensure state consistent even when empty
         return;
       }
 
@@ -412,23 +438,29 @@
         // Make vote button match your form submit buttons exactly:
         voteBtn.className = 'submit-btn';
         voteBtn.style.fontWeight = '400';
-        voteBtn.disabled = getVotesLeft() <= 0;
 
-        // Store the nomination id on the button for clarity
+        // Store the nomination id on the button for clarity (empty string allowed)
         const nomId = item.id || item.ID || '';
         voteBtn.dataset.nomId = nomId;
-        voteBtn.setAttribute('data-nom-id', nomId); // used by updateVoteButtonsState selector
+        voteBtn.setAttribute('data-nom-id', nomId);
+
+        // set initial disabled state using helper
+        setButtonDisabledVisual(voteBtn, getVotesLeft() <= 0);
 
         voteBtn.addEventListener('click', async function() {
           if (getVotesLeft() <= 0) {
             alert('No votes left.');
+            // ensure all buttons reflect the state
+            updateVoteButtonsState();
             return;
           }
           const btn = this;
           const tVotesCell = tVotes;
 
           const payload = { submitted: btn.dataset.nomId || item.title };
-          btn.disabled = true;
+          // Immediately disable clicked button to avoid double clicks
+          setButtonDisabledVisual(btn, true);
+          const previousText = btn.textContent;
           btn.textContent = 'Voting…';
 
           try {
@@ -438,7 +470,6 @@
               body: JSON.stringify(payload)
             });
 
-            // read response content
             const text = await resp.text();
             let json = null;
             try { json = JSON.parse(text); } catch(e){ json = null; }
@@ -446,13 +477,14 @@
             if (!resp.ok) {
               const msg = (json && (json.error || json.message)) || text || `Server error ${resp.status}`;
               alert('Could not register vote: ' + msg);
-              btn.disabled = getVotesLeft() <= 0; // restore disabled state properly
-              btn.textContent = 'Vote';
+              // restore clicked button state (but respect global disabled)
+              setButtonDisabledVisual(btn, getVotesLeft() <= 0);
+              btn.textContent = previousText;
               updateVoteButtonsState();
               return;
             }
 
-            // success
+            // success — increment session votes and UI
             const current = parseInt(sessionStorage.getItem('votesCast') || '0', 10);
             sessionStorage.setItem('votesCast', (current + 1).toString());
             updateVotesLeftDisplay();
@@ -463,18 +495,19 @@
               if (!isNaN(currentVotesNum)) tVotesCell.textContent = currentVotesNum + 1;
             } catch(e){ /* ignore */ }
 
-            // after vote, disable buttons if needed and reload authoritative data
+            // After voting, disable all buttons if votes exhausted
             updateVoteButtonsState();
-            loadNoms();
+
+            // And refresh authoritative data (recreates buttons and reapplies disabled state)
+            await loadNoms();
+
           } catch (err) {
             console.error('Error submitting vote:', err);
             alert('Could not register vote — network error.');
-            btn.disabled = getVotesLeft() <= 0;
-            btn.textContent = 'Vote';
+            // restore clicked button state
+            setButtonDisabledVisual(btn, getVotesLeft() <= 0);
+            btn.textContent = previousText;
             updateVoteButtonsState();
-          } finally {
-            // ensure label resets if still enabled and not "Voting…"
-            if (!btn.disabled) btn.textContent = 'Vote';
           }
         });
 
@@ -494,10 +527,12 @@
     } catch(e) {
       console.error('Error loading nominations:', e);
       nomsBody.innerHTML = '<tr><td colspan="5">Error loading nominations.</td></tr>';
+      updateVoteButtonsState();
     }
   }
 
   // initial load + periodic refresh
+  updateVotesLeftDisplay();
   loadNoms();
   setInterval(loadNoms, 5000);
 
@@ -609,6 +644,7 @@
 </script>
 
 
+  
   
 </body>
 </html>
