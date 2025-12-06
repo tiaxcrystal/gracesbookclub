@@ -259,7 +259,16 @@
   color: #666;
 }
 
-  /* Past Books Carousel styles */
+
+
+
+
+  /* Past Books Carousel styles (revised)
+   - One slide visible at a time
+   - Square image viewport (no cropping; object-fit: contain)
+   - Caption below image
+   - Prev/Next buttons styled and disabled at ends
+   - Pause button hidden (no autoplay UI) */
 .past-books-section {
   width: 90%;
   max-width: 1000px;
@@ -275,48 +284,72 @@
   text-align: center;
 }
 
+/* container that holds the prev button, track, and next button */
 .carousel {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
+/* visible window for slides */
 .carousel-track-wrapper {
   overflow: hidden;
   flex: 1 1 auto;
   border-radius: 12px;
   background: white;
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  position: relative;
 }
 
+/* track that slides left/right; one slide equals wrapper width */
 .carousel-track {
   display: flex;
-  padding: 12px;
+  padding: 0;            /* slide spacing handled by gap below */
   margin: 0;
   list-style: none;
   transition: transform 0.45s cubic-bezier(.25,.8,.25,1);
   gap: 12px;
+  will-change: transform;
 }
 
+/* individual slide - JS will set min/max width to match wrapper width */
 .carousel-slide {
-  min-width: 260px; /* controls visible slide width */
-  max-width: 320px;
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   background: white;
   border-radius: 8px;
+  box-sizing: border-box;
+  overflow: visible;
+  /* make sure caption does not overlap image */
 }
 
-.carousel-slide img {
+/* NEW: image container that forces a square viewport.
+   Uses aspect-ratio when supported and falls back to JS sizing. */
+.carousel-image-container {
   width: 100%;
-  height: 200px;
-  object-fit: cover;
+  box-sizing: border-box;
+  overflow: hidden;
+  display: block;
+  background: white;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
+  aspect-ratio: 1 / 1;   /* modern browsers: forces square */
 }
 
+/* actual <img> – do NOT crop; center and contain inside the square */
+.carousel-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;      /* do not crop; maintain aspect ratio */
+  display: block;
+  background: #fff;         /* white background behind contained images */
+  border: none;
+  border-radius: 0;         /* radius lives on container */
+}
+
+/* caption area beneath the image */
 .carousel-caption {
   padding: 10px;
   text-align: left;
@@ -325,8 +358,10 @@
   background: white;
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
+  box-sizing: border-box;
 }
 
+/* title link styling */
 .carousel-caption a.title-link {
   color: #4c1033;
   text-decoration: none;
@@ -341,7 +376,7 @@
   color: #666;
 }
 
-/* buttons */
+/* Prev/Next buttons (left/right) */
 .carousel-btn {
   background: #eec2cd;
   border: none;
@@ -350,9 +385,25 @@
   border-radius: 8px;
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 1.05rem;
 }
 .carousel-btn:hover { background: #4c1033; color: white; }
 
+/* disabled state for prev/next */
+.carousel-btn:disabled {
+  background: #f0dfe2;
+  color: #999;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.9;
+}
+
+/* small controls (Play/Pause) - hide pause and keep play hidden too if you don't want any */
 .small-btn {
   background: transparent;
   border: 1px solid #eec2cd;
@@ -363,12 +414,29 @@
 }
 .small-btn:hover { background: #eec2cd; }
 
-/* responsive */
-@media (max-width: 700px) {
-  .carousel-slide { min-width: 210px; max-width: 260px; }
-  .carousel-slide img { height: 160px; }
-  .past-books-section h2 { font-size: 20pt; }
+/* hide pause button (you requested no pause / autoplay UI) */
+#carousel-pause { display: none !important; }
+
+/* make sure the track and slides reflow nicely on small screens */
+@media (max-width: 900px) {
+  .past-books-section { width: 95%; }
+  .carousel-btn { padding: 8px 10px; min-width: 40px; min-height: 40px; }
 }
+
+@media (max-width: 700px) {
+  .past-books-section h2 { font-size: 20pt; }
+  .carousel-caption { font-size: 0.95rem; padding: 8px; }
+  .carousel-btn { padding: 6px 8px; min-width: 36px; min-height: 36px; }
+}
+
+/* accessibility: focus outlines for keyboard users */
+.carousel-btn:focus,
+.small-btn:focus,
+.carousel-caption a.title-link:focus {
+  outline: 3px solid rgba(124,16,40,0.15);
+  outline-offset: 3px;
+}
+
 
 </style>
 </head>
@@ -819,55 +887,106 @@
     }
   });
 
+
+
+
+  
   // Past Books carousel frontend
+/* Full replacement for initPastBooksCarousel - one-image-at-a-time, no autoplay,
+   image click opens the Goodreads link (it.link). Images use picture/pictureLink,
+   fallback to placeholder; images shown uncropped in a square viewport. */
 (async function initPastBooksCarousel() {
   const track = document.querySelector('.carousel-track');
   const prevBtn = document.querySelector('.carousel-btn.prev');
   const nextBtn = document.querySelector('.carousel-btn.next');
-  const playBtn = document.getElementById('carousel-play');
-  const pauseBtn = document.getElementById('carousel-pause');
+  const trackWrapper = document.querySelector('.carousel-track-wrapper');
 
-  if (!track) return; // nothing to do
+  if (!track || !trackWrapper) return; // nothing to do
 
-  // placeholder image if none provided
-  const PLACEHOLDER = '/favicon.ico'; // or any URL to a placeholder image
+  // reliable placeholder (use your raw GitHub favicon PNG)
+  const PLACEHOLDER = 'https://raw.githubusercontent.com/tiaxcrystal/gracesbookclub/main/images/favicon.png';
 
   // fetch data
   let items = [];
   try {
-    items = await fetch('/.netlify/functions/getPastBooks').then(r => {
-      if (!r.ok) throw new Error('Failed to fetch past books');
-      return r.json();
-    });
+    const resp = await fetch('/.netlify/functions/getPastBooks');
+    if (!resp.ok) throw new Error('Failed to fetch past books: ' + resp.status);
+    items = await resp.json();
   } catch (err) {
     console.error('Could not load past books', err);
     track.innerHTML = '<li style="padding:20px;">Could not load past books.</li>';
+    // disable nav buttons if present
+    if (prevBtn) prevBtn.disabled = true;
+    if (nextBtn) nextBtn.disabled = true;
     return;
   }
 
-  if (!items.length) {
+  if (!items || !items.length) {
     track.innerHTML = '<li style="padding:20px;">No past books yet.</li>';
+    if (prevBtn) prevBtn.disabled = true;
+    if (nextBtn) nextBtn.disabled = true;
     return;
   }
+
+  // clear in case existing
+  track.innerHTML = '';
 
   // create slides
   items.forEach((it, idx) => {
     const li = document.createElement('li');
     li.className = 'carousel-slide';
     li.setAttribute('data-index', idx);
+    li.style.boxSizing = 'border-box';
+    li.style.display = 'flex';
+    li.style.flexDirection = 'column';
+    li.style.alignItems = 'stretch';
 
-    // image: prefer picture (column D) otherwise pictureLink (E) maybe contains URL, try both
-    const imgUrl = it.picture || it.pictureLink || PLACEHOLDER;
+    // Choose image source (prefer picture, then pictureLink), but clicking goes to it.link
+    let imgUrl = it.picture || it.pictureLink || '';
+    // defensive: ensure absolute and http(s); else fallback later
+    try {
+      if (imgUrl) {
+        const parsed = new URL(imgUrl, window.location.href);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+          imgUrl = '';
+        } else {
+          imgUrl = parsed.href;
+        }
+      }
+    } catch (e) {
+      imgUrl = '';
+    }
+    const finalImgSrc = imgUrl ? encodeURI(imgUrl) : PLACEHOLDER;
+
+    // link that opens Goodreads (column B -> it.link)
+    const goodreadsHref = (it.link && (typeof it.link === 'string')) ? it.link : '#';
     const imgWrap = document.createElement('a');
-    imgWrap.href = it.pictureLink || it.link || '#';
+    imgWrap.href = goodreadsHref;
     imgWrap.target = '_blank';
-    imgWrap.rel = 'noopener';
+    imgWrap.rel = 'noopener noreferrer';
 
+    // image element: make it fill square viewport but not crop (object-fit: contain)
     const img = document.createElement('img');
-    img.src = imgUrl;
-    img.alt = it.title || 'Book cover';
+    img.src = finalImgSrc;
+    img.alt = it.title ? `${it.title} cover` : 'Book cover';
+    img.loading = 'lazy';
+    img.style.width = '100%';
+    img.style.height = '100%';        // will be sized by wrapper to be square
+    img.style.objectFit = 'contain';  // do not crop
+    img.style.display = 'block';
+    img.style.background = '#fff';    // white background behind contained images
+
+    // swap to placeholder on error and log original
+    img.addEventListener('error', () => {
+      if (img.src !== PLACEHOLDER) {
+        console.warn('Book image failed to load, swapping to placeholder:', imgUrl || '(empty)');
+        img.src = PLACEHOLDER;
+      }
+    });
+
     imgWrap.appendChild(img);
 
+    // caption
     const caption = document.createElement('div');
     caption.className = 'carousel-caption';
 
@@ -875,7 +994,7 @@
     titleLink.className = 'title-link';
     titleLink.href = it.link || '#';
     titleLink.target = '_blank';
-    titleLink.rel = 'noopener';
+    titleLink.rel = 'noopener noreferrer';
     titleLink.textContent = it.title || '(no title)';
 
     const monthSpan = document.createElement('span');
@@ -885,36 +1004,53 @@
     caption.appendChild(titleLink);
     if (it.month) caption.appendChild(monthSpan);
 
-    li.appendChild(imgWrap);
+    // build slide: image area on top, caption below
+    // Create an image container that *forces a square viewport* whose size is set later
+    const imgContainer = document.createElement('div');
+    imgContainer.className = 'carousel-image-container';
+    imgContainer.style.width = '100%';
+    imgContainer.style.boxSizing = 'border-box';
+    imgContainer.style.flex = '0 0 auto';
+    imgContainer.style.display = 'block';
+    imgContainer.style.overflow = 'hidden';
+
+    imgContainer.appendChild(imgWrap);
+
+    li.appendChild(imgContainer);
     li.appendChild(caption);
 
     track.appendChild(li);
   });
 
-  // carousel mechanics
+  // Carousel mechanics (one per view)
   let slideIndex = 0;
   const slides = Array.from(track.children);
-  const visibleWidth = track.parentElement.clientWidth;
-  const slideGap = 12; // must match CSS gap
-  const slideWidths = slides.map(s => s.getBoundingClientRect().width + slideGap);
+
+  function setSizes() {
+    const wrapperWidth = trackWrapper.clientWidth;
+    // make each slide equal to wrapper width (one visible)
+    slides.forEach(slide => {
+      slide.style.minWidth = wrapperWidth + 'px';
+      slide.style.maxWidth = wrapperWidth + 'px';
+      // Make the image container square (height == width)
+      const imgContainer = slide.querySelector('.carousel-image-container');
+      if (imgContainer) imgContainer.style.height = wrapperWidth + 'px';
+    });
+    updateTrackPosition();
+  }
 
   function updateTrackPosition() {
-    // compute offset so selected slide is left-aligned
-    let offset = 0;
-    for (let i = 0; i < slideIndex; i++) offset += slideWidths[i] || 0;
+    const wrapperWidth = trackWrapper.clientWidth;
+    const offset = slideIndex * wrapperWidth;
     track.style.transform = `translateX(-${offset}px)`;
     // disable/enable buttons if at ends
-    prevBtn.disabled = (slideIndex === 0);
-    nextBtn.disabled = (slideIndex >= slides.length - 1);
+    if (prevBtn) prevBtn.disabled = (slideIndex === 0);
+    if (nextBtn) nextBtn.disabled = (slideIndex >= slides.length - 1);
   }
 
   function nextSlide() {
     if (slideIndex < slides.length - 1) {
       slideIndex++;
-      updateTrackPosition();
-    } else {
-      // wrap
-      slideIndex = 0;
       updateTrackPosition();
     }
   }
@@ -922,94 +1058,69 @@
     if (slideIndex > 0) {
       slideIndex--;
       updateTrackPosition();
-    } else {
-      slideIndex = slides.length - 1;
-      updateTrackPosition();
     }
   }
 
-  prevBtn.addEventListener('click', prevSlide);
-  nextBtn.addEventListener('click', nextSlide);
+  // wire buttons (if they exist)
+  if (prevBtn) prevBtn.addEventListener('click', prevSlide);
+  if (nextBtn) nextBtn.addEventListener('click', nextSlide);
 
-  // keyboard control
+  // keyboard control for accessibility: left/right arrows
   document.addEventListener('keydown', e => {
     if (e.key === 'ArrowLeft') prevSlide();
     if (e.key === 'ArrowRight') nextSlide();
-    if (e.key === ' ' || e.key === 'Spacebar') { // space toggles play/pause
-      e.preventDefault();
-      toggleAutoplay();
-    }
   });
 
-  // autoplay
-  let autoplay = true;
-  const INTERVAL = 5000;
-  let timer = null;
-
-  function startAutoplay() {
-    if (timer) clearInterval(timer);
-    timer = setInterval(() => nextSlide(), INTERVAL);
-    autoplay = true;
-    playBtn.style.display = 'none';
-    pauseBtn.style.display = '';
-    playBtn.setAttribute('aria-pressed', 'true');
-    pauseBtn.setAttribute('aria-pressed', 'false');
-  }
-  function stopAutoplay() {
-    if (timer) clearInterval(timer);
-    timer = null;
-    autoplay = false;
-    playBtn.style.display = '';
-    pauseBtn.style.display = 'none';
-    playBtn.setAttribute('aria-pressed', 'false');
-    pauseBtn.setAttribute('aria-pressed', 'true');
-  }
-  function toggleAutoplay() {
-    if (autoplay) stopAutoplay(); else startAutoplay();
-  }
-
-  playBtn.addEventListener('click', startAutoplay);
-  pauseBtn.addEventListener('click', stopAutoplay);
-
-  // initial layout after images load
-  function recalcWidths() {
-    const gap = slideGap;
-    const rects = slides.map(s => s.getBoundingClientRect().width + gap);
-    for (let i = 0; i < rects.length; i++) slideWidths[i] = rects[i];
-    updateTrackPosition();
-  }
-
-  // make sure to recalc after images load (they might be remote)
-  let imagesLoaded = 0;
+  // initial sizing after images load
+  let imagesToLoad = slides.length;
+  let imagesSeen = 0;
   slides.forEach(slide => {
     const img = slide.querySelector('img');
-    if (!img) { imagesLoaded++; return; }
+    if (!img) {
+      imagesSeen++;
+      return;
+    }
     if (img.complete) {
-      imagesLoaded++;
-      if (imagesLoaded === slides.length) recalcWidths();
+      imagesSeen++;
     } else {
-      img.addEventListener('load', () => {
-        imagesLoaded++;
-        if (imagesLoaded === slides.length) recalcWidths();
-      });
-      img.addEventListener('error', () => {
-        imagesLoaded++;
-        if (imagesLoaded === slides.length) recalcWidths();
-      });
+      img.addEventListener('load', () => { imagesSeen++; });
+      img.addEventListener('error', () => { imagesSeen++; });
     }
   });
 
-  // start autoplay
-  startAutoplay();
+  // wait a short tick then set sizes (so CSS is applied & wrapper widths measurable)
+  // Also try again when all images report loaded (or after a timeout)
+  function tryFinalizeLayout() {
+    setSizes();
+    // in case images take more time, recalc after they all report
+    const timeout = setTimeout(() => {
+      setSizes();
+    }, 300);
+    const interval = setInterval(() => {
+      if (imagesSeen >= imagesToLoad) {
+        clearInterval(interval);
+        clearTimeout(timeout);
+        setSizes();
+      }
+    }, 100);
+  }
 
-  // reflow on resize
+  tryFinalizeLayout();
+
+  // recalc on resize (debounced)
+  let resizeTimer = null;
   window.addEventListener('resize', () => {
-    // small debounce
-    clearTimeout(window._pastBooksResize);
-    window._pastBooksResize = setTimeout(() => recalcWidths(), 120);
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      setSizes();
+    }, 120);
   });
-})();
 
+  // ensure buttons initial state
+  updateTrackPosition();
+
+  // Prevent any autoplay: do nothing else
+})();
 </script>
 
 
