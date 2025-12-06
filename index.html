@@ -12,6 +12,17 @@
     background-color: #fff5f8;
   }
 
+ /* Wine-colored links for the Suggested Books table */
+  .suggested-books-table a {
+    color: #7a0c26;        /* your wine color */
+    text-decoration: none; /* remove underline normally */
+    font-weight: 500;
+  }
+
+  .suggested-books-table a:hover {
+    text-decoration: underline; 
+  }
+  
 /* Ensure disabled buttons look grayed and match your UI */
 .submit-btn:disabled,
 .submit-btn.disabled {
@@ -233,7 +244,7 @@
 
   <h2>Suggested Books</h2>
   <p id="voteNotice" class="note">You have <span id="votesLeft">3</span> votes remaining.</p>
-  <table id="nomsTable" aria-live="polite">
+  <table id="nomsTable" aria-live="polite" class="suggested-books-table">
     <thead>
       <tr><th>Title</th><th>Votes</th><th>Action</th></tr>
     </thead>
