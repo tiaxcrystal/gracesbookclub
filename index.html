@@ -401,51 +401,67 @@
         // Store the nomination id on the button for clarity
         voteBtn.dataset.nomId = item.id || item.ID || '';
 
-        voteBtn.addEventListener('click', async function() {
-          if (getVotesLeft() <= 0) return;
-          const nomId = this.dataset.nomId;
-          if (!nomId) {
-            // fallback to title (less reliable) if no id available
-            console.warn('No nomination ID present, attempting vote by title.');
-          }
+      // Replace the vote click handler with this function (inside loadNoms where voteBtn is created)
+voteBtn.addEventListener('click', async function() {
+  if (getVotesLeft() <= 0) {
+    alert('No votes left.');
+    return;
+  }
 
-          try {
-            // call addVote function with the ID (preferred)
-            const payload = { submitted: nomId || item.title };
-            const resp = await fetch('/.netlify/functions/addVote', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            });
+  const nomId = this.dataset.nomId || item.id || item.ID || '';
+  const payload = { submitted: nomId || item.title };
 
-            if (!resp.ok) {
-              const txt = await resp.text().catch(()=>null);
-              console.error('Vote function error:', resp.status, txt);
-              alert('Could not register vote.');
-              return;
-            }
+  // show immediate UI feedback
+  voteBtn.disabled = true;
+  voteBtn.textContent = 'Voting…';
 
-            const result = await resp.json().catch(()=>null);
-            // increment session vote count and refresh UI
-            const current = parseInt(sessionStorage.getItem('votesCast') || '0', 10);
-            sessionStorage.setItem('votesCast', (current + 1).toString());
-            updateVotesLeftDisplay();
+  try {
+    const resp = await fetch('/.netlify/functions/addVote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
 
-            // Immediately update votes cell if possible for snappier UI:
-            // find the sibling votes cell and increment visually (best-effort)
-            try {
-              const votesCell = tVotes;
-              const currentVotesNum = parseInt(votesCell.textContent || '0', 10);
-              if (!isNaN(currentVotesNum)) votesCell.textContent = currentVotesNum + 1;
-            } catch(e) { /* ignore visual update failure */ }
+    // Read response body regardless of status
+    const text = await resp.text();
+    let json = null;
+    try { json = JSON.parse(text); } catch(e) { json = null; }
 
-            // Refresh nominations from server to get authoritative order/counts
-            loadNoms();
-          } catch (err) {
-            console.error('Error submitting vote:', err);
-            alert('Error registering vote.');
-          }
-        });
+    if (!resp.ok) {
+      console.error('Vote function returned non-OK:', resp.status, text);
+      const msg = (json && (json.error || json.message)) || text || `Server error ${resp.status}`;
+      alert('Could not register vote: ' + msg);
+      // restore button label
+      voteBtn.disabled = false;
+      voteBtn.textContent = 'Vote';
+      return;
+    }
+
+    // success path: parse JSON response
+    const result = json || { success: true };
+    // increment client-side votes count
+    const current = parseInt(sessionStorage.getItem('votesCast') || '0', 10);
+    sessionStorage.setItem('votesCast', (current + 1).toString());
+    updateVotesLeftDisplay();
+
+    // optimistic UI update
+    try {
+      const votesCell = tVotes;
+      const currentVotesNum = parseInt(votesCell.textContent || '0', 10);
+      if (!isNaN(currentVotesNum)) votesCell.textContent = currentVotesNum + 1;
+    } catch(e) { /* ignore */ }
+
+    // reload authoritative data
+    loadNoms();
+
+  } catch (err) {
+    console.error('Network / fetch error when voting:', err);
+    alert('Could not register vote — network error.');
+    voteBtn.disabled = false;
+    voteBtn.textContent = 'Vote';
+  }
+});
+
 
         tAction.appendChild(voteBtn);
 
