@@ -7,7 +7,6 @@ const suggestForm = document.getElementById('suggestForm');
 const suggestStatus = document.getElementById('suggest-status');
 const suggestTableBody = document.querySelector('#suggestions-table tbody');
 
-// Load existing suggestions from backend
 async function loadSuggestions() {
   if (!suggestTableBody) return;
   try {
@@ -23,13 +22,22 @@ async function loadSuggestions() {
       const row = document.createElement('tr');
 
       const bookCell = document.createElement('td');
-      bookCell.textContent = entry.book || '(no title)';
+      bookCell.textContent = entry.title || '(no title)';
 
-      const suggesterCell = document.createElement('td');
-      suggesterCell.textContent = entry.name || '(anonymous)';
+      const linkCell = document.createElement('td');
+      if (entry.link) {
+        const a = document.createElement('a');
+        a.href = entry.link;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.textContent = 'Link';
+        linkCell.appendChild(a);
+      } else {
+        linkCell.textContent = '(no link)';
+      }
 
       row.appendChild(bookCell);
-      row.appendChild(suggesterCell);
+      row.appendChild(linkCell);
       suggestTableBody.appendChild(row);
     });
   } catch (err) {
@@ -38,16 +46,15 @@ async function loadSuggestions() {
   }
 }
 
-// Handle suggestion form submission
 if (suggestForm) {
   suggestForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const bookName = suggestForm.book.value.trim();
-    const name = suggestForm.name.value.trim();
+    const title = suggestForm.title.value.trim();
+    const link = suggestForm.link.value.trim();
 
-    if (!bookName) {
-      suggestStatus.textContent = 'Please enter a book title.';
+    if (!title || !link) {
+      suggestStatus.textContent = 'Please enter a title and a valid link.';
       suggestStatus.style.color = 'red';
       return;
     }
@@ -56,16 +63,21 @@ if (suggestForm) {
     suggestStatus.style.color = '#4c1033';
 
     try {
-      await fetch('/.netlify/functions/submitNomination', {
+      const resp = await fetch('/.netlify/functions/submitNomination', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ book: bookName, name: name || 'Anonymous' })
+        body: JSON.stringify({ title, link })
       });
 
-      suggestStatus.textContent = 'Suggestion submitted!';
-      suggestStatus.style.color = 'green';
-      suggestForm.reset();
-      loadSuggestions();
+      const result = await resp.json();
+      if (result.success) {
+        suggestStatus.textContent = 'Suggestion submitted!';
+        suggestStatus.style.color = 'green';
+        suggestForm.reset();
+        loadSuggestions();
+      } else {
+        throw new Error(result.error || 'Unknown error');
+      }
     } catch (err) {
       console.error('Error submitting suggestion:', err);
       suggestStatus.textContent = 'Error submitting suggestion.';
@@ -79,7 +91,6 @@ const voteForm = document.getElementById('voteForm');
 const voteStatus = document.getElementById('vote-status');
 const voteSelect = document.getElementById('vote-select');
 
-// Load suggestions into vote dropdown
 async function loadVoteOptions() {
   if (!voteSelect) return;
   try {
@@ -96,8 +107,8 @@ async function loadVoteOptions() {
 
     data.forEach(entry => {
       const option = document.createElement('option');
-      option.value = entry.book || '';
-      option.textContent = entry.book || '(no title)';
+      option.value = entry.title || '';
+      option.textContent = entry.title || '(no title)';
       voteSelect.add(option);
     });
   } catch (err) {
@@ -106,7 +117,6 @@ async function loadVoteOptions() {
   }
 }
 
-// Handle voting form submission
 if (voteForm) {
   voteForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -133,8 +143,8 @@ if (voteForm) {
       voteStatus.textContent = 'Vote submitted!';
       voteStatus.style.color = 'green';
       voteForm.reset();
-      loadVoteOptions(); // Refresh options in case something changed
-      loadSuggestions(); // Optional: refresh table to show latest votes/suggestions
+      loadVoteOptions();
+      loadSuggestions();
     } catch (err) {
       console.error('Error submitting vote:', err);
       voteStatus.textContent = 'Error submitting vote.';
@@ -146,6 +156,4 @@ if (voteForm) {
 // Initial load
 loadSuggestions();
 loadVoteOptions();
-
-// Optional: auto-refresh every 5 seconds
 setInterval(() => { loadSuggestions(); loadVoteOptions(); }, 5000);
