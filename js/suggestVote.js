@@ -3,18 +3,18 @@
 // =======================
 
 // --- Suggestion Form ---
-const suggestForm = document.getElementById('suggestForm');
-const suggestStatus = document.getElementById('suggest-status');
-const suggestTableBody = document.querySelector('#suggestions-table tbody');
+const nomForm = document.getElementById('nomForm');
+const nomStatus = document.getElementById('nomStatus');
+const nomsTableBody = document.querySelector('#nomsTable tbody');
 
 async function loadSuggestions() {
-  if (!suggestTableBody) return;
+  if (!nomsTableBody) return;
   try {
     const data = await fetch('/.netlify/functions/getNominations').then(r => r.json());
-    suggestTableBody.innerHTML = '';
+    nomsTableBody.innerHTML = '';
 
     if (!data || !data.length) {
-      suggestTableBody.innerHTML = '<tr><td colspan="2">No suggestions yet.</td></tr>';
+      nomsTableBody.innerHTML = '<tr><td colspan="2">No suggestions yet.</td></tr>';
       return;
     }
 
@@ -38,29 +38,29 @@ async function loadSuggestions() {
 
       row.appendChild(bookCell);
       row.appendChild(linkCell);
-      suggestTableBody.appendChild(row);
+      nomsTableBody.appendChild(row);
     });
   } catch (err) {
     console.error('Error loading suggestions:', err);
-    suggestTableBody.innerHTML = '<tr><td colspan="2">Error loading suggestions.</td></tr>';
+    nomsTableBody.innerHTML = '<tr><td colspan="2">Error loading suggestions.</td></tr>';
   }
 }
 
-if (suggestForm) {
-  suggestForm.addEventListener('submit', async (e) => {
+if (nomForm) {
+  nomForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const title = suggestForm.title.value.trim();
-    const link = suggestForm.link.value.trim();
+    const title = nomForm.title.value.trim();
+    const link = nomForm.link.value.trim();
 
     if (!title || !link) {
-      suggestStatus.textContent = 'Please enter a title and a valid link.';
-      suggestStatus.style.color = 'red';
+      nomStatus.textContent = 'Please enter a title and a valid link.';
+      nomStatus.style.color = 'red';
       return;
     }
 
-    suggestStatus.textContent = 'Submitting…';
-    suggestStatus.style.color = '#4c1033';
+    nomStatus.textContent = 'Submitting…';
+    nomStatus.style.color = '#4c1033';
 
     try {
       const resp = await fetch('/.netlify/functions/submitNomination', {
@@ -71,22 +71,23 @@ if (suggestForm) {
 
       const result = await resp.json();
       if (result.success) {
-        suggestStatus.textContent = 'Suggestion submitted!';
-        suggestStatus.style.color = 'green';
-        suggestForm.reset();
+        nomStatus.textContent = 'Suggestion submitted!';
+        nomStatus.style.color = 'green';
+        nomForm.reset();
         loadSuggestions();
       } else {
         throw new Error(result.error || 'Unknown error');
       }
     } catch (err) {
       console.error('Error submitting suggestion:', err);
-      suggestStatus.textContent = 'Error submitting suggestion.';
-      suggestStatus.style.color = 'red';
+      nomStatus.textContent = 'Error submitting suggestion.';
+      nomStatus.style.color = 'red';
     }
   });
 }
 
-// --- Voting Form ---
+// --- Voting Section (optional) ---
+// Only activate if you have a vote form & select in your HTML
 const voteForm = document.getElementById('voteForm');
 const voteStatus = document.getElementById('vote-status');
 const voteSelect = document.getElementById('vote-select');
@@ -122,7 +123,7 @@ if (voteForm) {
     e.preventDefault();
 
     const selectedBook = voteSelect.value;
-    const voterName = voteForm.name.value.trim();
+    const voterName = voteForm.name.value?.trim() || 'Anonymous';
 
     if (!selectedBook) {
       voteStatus.textContent = 'Please select a book to vote.';
@@ -137,7 +138,7 @@ if (voteForm) {
       await fetch('/.netlify/functions/addVote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ book: selectedBook, name: voterName || 'Anonymous' })
+        body: JSON.stringify({ book: selectedBook, name: voterName })
       });
 
       voteStatus.textContent = 'Vote submitted!';
