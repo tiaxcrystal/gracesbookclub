@@ -684,15 +684,15 @@ rsvpForm.addEventListener('submit', async function(e) {
 // =======================
 const suggestForm = document.getElementById('suggestForm');
 const voteForm = document.getElementById('voteForm');
-const bookListContainer = document.getElementById('suggested-books-list');
+const suggestedBooksContainer = document.getElementById('suggested-books-list');
 
 async function loadSuggestedBooks() {
   try {
     const books = await fetch('/.netlify/functions/getSuggestedBooks').then(r => r.json());
-    bookListContainer.innerHTML = '';
+    suggestedBooksContainer.innerHTML = '';
 
     if (!books || !books.length) {
-      bookListContainer.textContent = 'No suggested books yet.';
+      suggestedBooksContainer.textContent = 'No suggested books yet.';
       return;
     }
 
@@ -705,49 +705,73 @@ async function loadSuggestedBooks() {
       votes.textContent = ` - ${book.votes || 0} votes`;
       div.appendChild(title);
       div.appendChild(votes);
-      bookListContainer.appendChild(div);
+      suggestedBooksContainer.appendChild(div);
     });
+
+    // Update vote select options
+    if (voteForm) {
+      const select = voteForm.querySelector('select[name="vote-book"]');
+      if (select) {
+        select.innerHTML = '';
+        books.forEach(book => {
+          const option = document.createElement('option');
+          option.value = book.title;
+          option.textContent = book.title;
+          select.add(option);
+        });
+      }
+    }
+
   } catch (e) {
     console.error('Error loading suggested books:', e);
-    bookListContainer.textContent = 'Error loading suggested books.';
+    suggestedBooksContainer.textContent = 'Error loading suggested books.';
   }
 }
 
-suggestForm.addEventListener('submit', async e => {
-  e.preventDefault();
-  const titleInput = this.title?.value.trim() || '';
-  if (!titleInput) return;
-  try {
-    await fetch('/.netlify/functions/addSuggestedBook', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: titleInput })
-    });
-    this.reset();
-    loadSuggestedBooks();
-  } catch (e) {
-    console.error('Error adding suggested book:', e);
-  }
-});
+if (suggestForm) {
+  suggestForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const titleInput = this.querySelector('input[name="title"]');
+    if (!titleInput) return;
+    const title = titleInput.value.trim();
+    if (!title) return;
 
-voteForm.addEventListener('submit', async e => {
-  e.preventDefault();
-  const selectedBook = voteForm.querySelector('select[name="vote-book"]')?.value;
-  if (!selectedBook) return;
+    try {
+      await fetch('/.netlify/functions/addSuggestedBook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title })
+      });
+      titleInput.value = '';
+      loadSuggestedBooks();
+    } catch (e) {
+      console.error('Error adding suggested book:', e);
+    }
+  });
+}
 
-  try {
-    await fetch('/.netlify/functions/voteSuggestedBook', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: selectedBook })
-    });
-    loadSuggestedBooks();
-  } catch (e) {
-    console.error('Error voting for book:', e);
-  }
-});
+if (voteForm) {
+  voteForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const select = this.querySelector('select[name="vote-book"]');
+    if (!select) return;
+    const selectedBook = select.value;
+    if (!selectedBook) return;
 
-// load suggestions on page load
+    try {
+      await fetch('/.netlify/functions/voteSuggestedBook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: selectedBook })
+      });
+      loadSuggestedBooks();
+    } catch (e) {
+      console.error('Error voting for book:', e);
+    }
+  });
+}
+
+// load suggestions immediately
 loadSuggestedBooks();
 
 // =======================
