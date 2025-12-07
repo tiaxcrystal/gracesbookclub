@@ -1,9 +1,8 @@
 // js/carousel.js
 // =======================
-// Past Books Carousel (defensive: removes duplicate buttons / avoids double-init)
+// Past Books Carousel (mobile-friendly, only title clickable)
 // =======================
 (function () {
-  // Avoid running twice
   if (window.__GRACES_CAROUSEL_LOADED) return;
   window.__GRACES_CAROUSEL_LOADED = true;
 
@@ -12,16 +11,9 @@
     const trackWrapper = document.querySelector('.carousel-track-wrapper');
     if (!track || !trackWrapper) return;
 
-    // Remove any pre-existing carousel buttons in the DOM to avoid duplicates
-    // (these might be inlined in the HTML or left from a previous init)
-    document.querySelectorAll('.carousel .carousel-btn, .carousel-btn.prev, .carousel-btn.next').forEach(btn => btn.remove());
-    // Also remove any controls container left behind
-    const existingControls = document.querySelectorAll('.carousel-controls');
-    existingControls.forEach(c => c.remove());
-
     const PLACEHOLDER = 'https://raw.githubusercontent.com/tiaxcrystal/gracesbookclub/main/images/favicon.png';
 
-    // fetch data
+    // fetch past books
     let items = [];
     try {
       const resp = await fetch('/.netlify/functions/getPastBooks');
@@ -50,16 +42,8 @@
 
       const imgUrl = (it.picture && it.picture.trim()) ? it.picture.trim()
                    : (it.pictureLink && it.pictureLink.trim()) ? it.pictureLink.trim()
-                   : (it.link && it.link.trim() && it.link.match(/\.(png|jpg|jpeg|gif)$/i) ? it.link.trim() : '')
-                   ;
-
+                   : (it.link && it.link.trim() && it.link.match(/\.(png|jpg|jpeg|gif)$/i) ? it.link.trim() : '');
       const finalImgSrc = imgUrl || PLACEHOLDER;
-
-      const goodreadsHref = (it.link && it.link.trim()) ? it.link.trim() : '#';
-      const imgWrap = document.createElement('a');
-      imgWrap.href = goodreadsHref;
-      imgWrap.target = '_blank';
-      imgWrap.rel = 'noopener noreferrer';
 
       const img = document.createElement('img');
       img.src = finalImgSrc;
@@ -72,23 +56,26 @@
       img.style.background = '#fff';
 
       img.addEventListener('error', () => {
-        if (img.src !== PLACEHOLDER) {
-          console.warn('Book image failed to load, swapping to placeholder:', imgUrl || '(empty)');
-          img.src = PLACEHOLDER;
-        }
+        if (img.src !== PLACEHOLDER) img.src = PLACEHOLDER;
       });
 
-      imgWrap.appendChild(img);
+      // image container (no <a> around image)
+      const imgContainer = document.createElement('div');
+      imgContainer.className = 'carousel-image-container';
+      imgContainer.style.boxSizing = 'border-box';
+      imgContainer.appendChild(img);
 
+      // caption with clickable title
       const caption = document.createElement('div');
       caption.className = 'carousel-caption';
       const titleLink = document.createElement('a');
       titleLink.className = 'title-link';
-      titleLink.href = goodreadsHref;
+      titleLink.href = it.link ? it.link.trim() : '#';
       titleLink.target = '_blank';
       titleLink.rel = 'noopener noreferrer';
       titleLink.textContent = it.title || '(no title)';
       caption.appendChild(titleLink);
+
       if (it.month) {
         const monthSpan = document.createElement('span');
         monthSpan.className = 'month';
@@ -96,17 +83,12 @@
         caption.appendChild(monthSpan);
       }
 
-      const imgContainer = document.createElement('div');
-      imgContainer.className = 'carousel-image-container';
-      imgContainer.style.boxSizing = 'border-box';
-      imgContainer.appendChild(imgWrap);
-
       li.appendChild(imgContainer);
       li.appendChild(caption);
       track.appendChild(li);
     });
 
-    // create controls container under track wrapper (single source of truth)
+    // create controls container if missing
     let controlsBar = document.querySelector('.carousel-controls');
     if (!controlsBar) {
       controlsBar = document.createElement('div');
@@ -116,7 +98,7 @@
       controlsBar.innerHTML = '';
     }
 
-    // create prev/next buttons
+    // prev/next buttons
     const prevBtn = document.createElement('button');
     prevBtn.className = 'carousel-btn prev';
     prevBtn.type = 'button';
@@ -169,25 +151,20 @@
     prevBtn.addEventListener('click', prevSlide);
     nextBtn.addEventListener('click', nextSlide);
 
-    // keyboard accessibility
+    // keyboard navigation
     document.addEventListener('keydown', e => {
       if (e.key === 'ArrowLeft') prevSlide();
       if (e.key === 'ArrowRight') nextSlide();
     });
 
-    // image load tracking then finalize layout
-    const slidesSnapshot = Array.from(track.children);
-    let imagesToLoad = slidesSnapshot.length;
+    // image load tracking
+    let imagesToLoad = slides.length;
     let imagesSeen = 0;
-    slidesSnapshot.forEach(slide => {
+    slides.forEach(slide => {
       const img = slide.querySelector('img');
-      if (!img) {
-        imagesSeen++;
-        return;
-      }
-      if (img.complete) {
-        imagesSeen++;
-      } else {
+      if (!img) { imagesSeen++; return; }
+      if (img.complete) imagesSeen++;
+      else {
         img.addEventListener('load', () => { imagesSeen++; });
         img.addEventListener('error', () => { imagesSeen++; });
       }
@@ -206,16 +183,14 @@
     }
     finalizeLayout();
 
-    // resize handler (debounced)
+    // responsive resize
     let resizeTimer = null;
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        setSizes();
-      }, 120);
+      resizeTimer = setTimeout(() => { setSizes(); }, 120);
     });
 
-    // initial state for buttons
+    // initial button state
     updateTrackPosition();
   })();
 })();
