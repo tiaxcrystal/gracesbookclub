@@ -682,42 +682,67 @@ rsvpForm.addEventListener('submit', async function(e) {
 });
 
 // =======================
-// Suggest & Vote (safe patch)
+// Suggest & Vote Section
 // =======================
-try {
+(async function initSuggestVote() {
   const suggestForm = document.getElementById('suggestForm');
-  const suggestionsList = document.querySelector('#suggestions-list');
+  const suggestionsList = document.getElementById('suggestions-list');
   const suggestStatus = document.getElementById('suggest-status');
 
-  if (suggestForm && suggestionsList && suggestStatus) {
-    suggestForm.addEventListener('submit', async e => {
-      e.preventDefault();
-      const name = suggestForm.name.value?.trim();
-      const book = suggestForm.book.value?.trim();
-      if (!name || !book) {
-        suggestStatus.textContent = 'Please fill out both fields!';
-        suggestStatus.style.color = 'red';
+  if (!suggestForm || !suggestionsList || !suggestStatus) return;
+
+  async function loadSuggestions() {
+    try {
+      const data = await fetch('/.netlify/functions/getSuggestions').then(r => r.json());
+      suggestionsList.innerHTML = '';
+      if (!data || !data.length) {
+        suggestionsList.innerHTML = '<li>No suggestions yet.</li>';
         return;
       }
-      try {
-        await fetch('/.netlify/functions/addSuggestion', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, book })
-        });
-        suggestStatus.textContent = 'Submitted!';
-        suggestStatus.style.color = 'green';
-        suggestForm.reset();
-      } catch (err) {
-        console.error(err);
-        suggestStatus.textContent = 'Error!';
-        suggestStatus.style.color = 'red';
-      }
-    });
+      data.reverse().forEach(entry => {
+        const li = document.createElement('li');
+        li.textContent = `${entry.name}: ${entry.book}`;
+        suggestionsList.appendChild(li);
+      });
+    } catch (err) {
+      console.error('Error loading suggestions:', err);
+      suggestionsList.innerHTML = '<li>Error loading suggestions.</li>';
+    }
   }
-} catch (err) {
-  console.warn('Suggest & Vote section skipped due to missing elements or other errors.', err);
-}
+
+  await loadSuggestions();
+
+  suggestForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const name = suggestForm.name.value?.trim();
+    const book = suggestForm.book.value?.trim();
+    if (!name || !book) {
+      suggestStatus.textContent = 'Please fill out both fields!';
+      suggestStatus.style.color = 'red';
+      return;
+    }
+    suggestStatus.textContent = 'Submitting...';
+    suggestStatus.style.color = '#4c1033';
+    try {
+      await fetch('/.netlify/functions/addSuggestion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, book })
+      });
+      suggestStatus.textContent = 'Submitted!';
+      suggestStatus.style.color = 'green';
+      suggestForm.reset();
+      await loadSuggestions();
+    } catch (err) {
+      console.error('Error submitting suggestion:', err);
+      suggestStatus.textContent = 'Error submitting suggestion!';
+      suggestStatus.style.color = 'red';
+    }
+  });
+
+  // Optional: refresh every 5 seconds
+  setInterval(loadSuggestions, 5000);
+})();
 
 // =======================
 // Rate Our Books
