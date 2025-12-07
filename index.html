@@ -680,9 +680,75 @@ rsvpForm.addEventListener('submit', async function(e) {
 });
 
 // =======================
-// Suggest & Vote
+// Suggest & Vote Section
 // =======================
-// (unchanged, keep as-is or update similar to Rate/RSVP patterns if needed)
+const suggestForm = document.getElementById('suggestForm');
+const voteForm = document.getElementById('voteForm');
+const bookListContainer = document.getElementById('suggested-books-list');
+
+async function loadSuggestedBooks() {
+  try {
+    const books = await fetch('/.netlify/functions/getSuggestedBooks').then(r => r.json());
+    bookListContainer.innerHTML = '';
+
+    if (!books || !books.length) {
+      bookListContainer.textContent = 'No suggested books yet.';
+      return;
+    }
+
+    books.forEach(book => {
+      const div = document.createElement('div');
+      div.className = 'suggested-book';
+      const title = document.createElement('span');
+      title.textContent = book.title || '(no title)';
+      const votes = document.createElement('span');
+      votes.textContent = ` - ${book.votes || 0} votes`;
+      div.appendChild(title);
+      div.appendChild(votes);
+      bookListContainer.appendChild(div);
+    });
+  } catch (e) {
+    console.error('Error loading suggested books:', e);
+    bookListContainer.textContent = 'Error loading suggested books.';
+  }
+}
+
+suggestForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  const titleInput = this.title?.value.trim() || '';
+  if (!titleInput) return;
+  try {
+    await fetch('/.netlify/functions/addSuggestedBook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: titleInput })
+    });
+    this.reset();
+    loadSuggestedBooks();
+  } catch (e) {
+    console.error('Error adding suggested book:', e);
+  }
+});
+
+voteForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  const selectedBook = voteForm.querySelector('select[name="vote-book"]')?.value;
+  if (!selectedBook) return;
+
+  try {
+    await fetch('/.netlify/functions/voteSuggestedBook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: selectedBook })
+    });
+    loadSuggestedBooks();
+  } catch (e) {
+    console.error('Error voting for book:', e);
+  }
+});
+
+// load suggestions on page load
+loadSuggestedBooks();
 
 // =======================
 // Rate Our Books
@@ -982,7 +1048,6 @@ populateBooks();
   updateTrackPosition();
 })();
 </script>
-
 
 
 
