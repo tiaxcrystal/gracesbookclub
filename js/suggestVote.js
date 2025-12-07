@@ -7,6 +7,7 @@ const nomForm = document.getElementById('nomForm');
 const nomStatus = document.getElementById('nomStatus');
 const nomsTableBody = document.querySelector('#nomsTable tbody');
 
+// Load nominations and render table
 async function loadSuggestions() {
   if (!nomsTableBody) return;
   try {
@@ -14,38 +15,64 @@ async function loadSuggestions() {
     nomsTableBody.innerHTML = '';
 
     if (!data || !data.length) {
-      nomsTableBody.innerHTML = '<tr><td colspan="2">No suggestions yet.</td></tr>';
+      nomsTableBody.innerHTML = '<tr><td colspan="3">No suggestions yet.</td></tr>';
       return;
     }
 
+    // Reverse so newest is first
     data.reverse().forEach(entry => {
       const row = document.createElement('tr');
 
-      const bookCell = document.createElement('td');
-      bookCell.textContent = entry.title || '(no title)';
-
-      const linkCell = document.createElement('td');
+      // Title (clickable)
+      const titleCell = document.createElement('td');
       if (entry.link) {
         const a = document.createElement('a');
         a.href = entry.link;
         a.target = '_blank';
         a.rel = 'noopener noreferrer';
-        a.textContent = 'Link';
-        linkCell.appendChild(a);
+        a.textContent = entry.title || '(no title)';
+        titleCell.appendChild(a);
       } else {
-        linkCell.textContent = '(no link)';
+        titleCell.textContent = entry.title || '(no title)';
       }
 
-      row.appendChild(bookCell);
-      row.appendChild(linkCell);
+      // Votes tally
+      const votesCell = document.createElement('td');
+      votesCell.textContent = entry.votes ?? 0;
+
+      // Vote button
+      const voteCell = document.createElement('td');
+      const voteBtn = document.createElement('button');
+      voteBtn.textContent = 'Vote';
+      voteBtn.className = 'submit-btn'; // matches your site's button style
+      voteBtn.addEventListener('click', async () => {
+        try {
+          await fetch('/.netlify/functions/addVote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ book: entry.title, name: 'Anonymous' }) // replace with actual voter if needed
+          });
+          loadSuggestions(); // refresh table to update votes
+        } catch (err) {
+          console.error('Error submitting vote:', err);
+          alert('Error submitting vote.');
+        }
+      });
+      voteCell.appendChild(voteBtn);
+
+      row.appendChild(titleCell);
+      row.appendChild(votesCell);
+      row.appendChild(voteCell);
+
       nomsTableBody.appendChild(row);
     });
   } catch (err) {
     console.error('Error loading suggestions:', err);
-    nomsTableBody.innerHTML = '<tr><td colspan="2">Error loading suggestions.</td></tr>';
+    nomsTableBody.innerHTML = '<tr><td colspan="3">Error loading suggestions.</td></tr>';
   }
 }
 
+// --- Nomination form submission ---
 if (nomForm) {
   nomForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -86,8 +113,7 @@ if (nomForm) {
   });
 }
 
-// --- Voting Section (optional) ---
-// Only activate if you have a vote form & select in your HTML
+// Optional: Voting section with a separate form if you ever add it
 const voteForm = document.getElementById('voteForm');
 const voteStatus = document.getElementById('vote-status');
 const voteSelect = document.getElementById('vote-select');
