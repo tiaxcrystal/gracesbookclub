@@ -724,8 +724,14 @@ rsvpForm.addEventListener('submit', async function(e) {
     li.setAttribute('data-index', idx);
     li.style.boxSizing = 'border-box';
 
-    // <-- FIXED: access spreadsheet property "Picture Link" properly
-    const imgUrl = (it['Picture Link'] && it['Picture Link'].trim()) ? it['Picture Link'].trim() : '';
+    // <-- FIXED: automatically find first valid image URL in any property
+    let imgUrl = '';
+    for (const key in it) {
+      if (typeof it[key] === 'string' && it[key].trim().match(/^https?:\/\/.*\.(png|jpg|jpeg|gif)$/i)) {
+        imgUrl = it[key].trim();
+        break;
+      }
+    }
     const finalImgSrc = imgUrl || PLACEHOLDER;
 
     const goodreadsHref = (it.link && it.link.trim()) ? it.link.trim() : '#';
@@ -779,26 +785,18 @@ rsvpForm.addEventListener('submit', async function(e) {
     track.appendChild(li);
   });
 
-  // <-- rest of carousel code unchanged
-  const oldSidePrev = document.querySelector('.carousel-btn.prev');
-  const oldSideNext = document.querySelector('.carousel-btn.next');
-  if (oldSidePrev) oldSidePrev.remove();
-  if (oldSideNext) oldSideNext.remove();
+  // Carousel controls
+  const oldPrev = document.querySelector('.carousel-btn.prev');
+  const oldNext = document.querySelector('.carousel-btn.next');
+  if (oldPrev) oldPrev.remove();
+  if (oldNext) oldNext.remove();
 
   let controlsBar = document.querySelector('.carousel-controls');
-  const trackWrapperExistingControls = document.querySelector('.carousel-track-wrapper + .carousel-controls');
   if (!controlsBar) {
     controlsBar = document.createElement('div');
     controlsBar.className = 'carousel-controls';
-    if (trackWrapperExistingControls) {
-      controlsBar = trackWrapperExistingControls;
-      controlsBar.innerHTML = '';
-    } else {
-      trackWrapper.insertAdjacentElement('afterend', controlsBar);
-    }
-  } else {
-    controlsBar.innerHTML = '';
-  }
+    trackWrapper.insertAdjacentElement('afterend', controlsBar);
+  } else controlsBar.innerHTML = '';
 
   const prevBtn = document.createElement('button');
   prevBtn.className = 'carousel-btn prev';
@@ -878,6 +876,7 @@ rsvpForm.addEventListener('submit', async function(e) {
   updateTrackPosition();
 })();
 </script>
+
 
 
 
