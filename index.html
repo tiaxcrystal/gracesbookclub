@@ -615,439 +615,247 @@
 
 <script>
 // =======================
-// Wait for DOM to be fully loaded
+// Navigation: switch active container
 // =======================
-document.addEventListener('DOMContentLoaded', () => {
+const navButtons = document.querySelectorAll('.nav-bar button');
+const containers = document.querySelectorAll('.container, .past-books-section');
 
-  // =======================
-  // Navigation: switch active container (includes past-books section)
-  // =======================
-  const navButtons = document.querySelectorAll('.nav-bar button');
-  const containers = document.querySelectorAll('.container, .past-books-section');
+navButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.getAttribute('data-target');
+    containers.forEach(c => c.classList.remove('active'));
+    const el = document.getElementById(target);
+    if (el) el.classList.add('active');
+  });
+});
 
-  navButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const target = btn.getAttribute('data-target');
-      containers.forEach(c => c.classList.remove('active'));
-      const el = document.getElementById(target);
-      if (el) el.classList.add('active');
+// =======================
+// RSVP Section
+// =======================
+const rsvpForm = document.getElementById('rsvpForm');
+const rsvpTableBody = document.querySelector('#rsvp-table tbody');
+const meetingDate = document.getElementById('meeting-date');
+const meetingTheme = document.getElementById('meeting-theme');
+
+async function loadRSVPs() {
+  try {
+    const data = await fetch('/.netlify/functions/getRSVPs').then(r => r.json());
+    rsvpTableBody.innerHTML = '';
+    data.reverse().forEach(entry => {
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${entry.name}</td><td>${entry.bringing}</td>`;
+      rsvpTableBody.appendChild(row);
     });
-  });
+  } catch(e) { console.error('Error loading RSVPs:', e); }
+}
 
-  // =======================
-  // RSVP Section
-  // =======================
-  const rsvpForm = document.getElementById('rsvpForm');
-  const rsvpTableBody = document.querySelector('#rsvp-table tbody');
-  const meetingDate = document.getElementById('meeting-date');
-  const meetingTheme = document.getElementById('meeting-theme');
+async function loadMeetingInfo() {
+  try {
+    const info = await fetch('/.netlify/functions/getMeetingInfo').then(r => r.json());
+    meetingDate.textContent = `Date: ${info.date}`;
+    meetingTheme.textContent = `Theme: ${info.theme}`;
+  } catch(e) { console.error('Error loading meeting info:', e); }
+}
 
-  async function loadRSVPs() {
-    try {
-      const data = await fetch('/.netlify/functions/getRSVPs').then(r => r.json());
-      rsvpTableBody.innerHTML = '';
-      data.reverse().forEach(entry => {
-        const row = document.createElement('tr');
-        const nameCell = document.createElement('td'); nameCell.textContent = entry.name;
-        const bringingCell = document.createElement('td'); bringingCell.textContent = entry.bringing;
-        row.appendChild(nameCell); row.appendChild(bringingCell);
-        rsvpTableBody.appendChild(row);
-      });
-    } catch(e) { console.error('Error loading RSVPs:', e); }
-  }
+loadRSVPs();
+loadMeetingInfo();
+setInterval(() => { loadRSVPs(); loadMeetingInfo(); }, 5000);
 
-  async function loadMeetingInfo() {
-    try {
-      const info = await fetch('/.netlify/functions/getMeetingInfo').then(r => r.json());
-      meetingDate.textContent = `Date: ${info.date}`;
-      meetingTheme.textContent = `Theme: ${info.theme}`;
-    } catch(e) { console.error('Error loading meeting info:', e); }
-  }
+rsvpForm.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const name = this.name.value.trim();
+  const bringing = this.bringing.value.trim();
+  if (!name || !bringing) return;
+  try {
+    await fetch('/.netlify/functions/addRSVP', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, bringing })
+    });
+    this.reset();
+    loadRSVPs();
+  } catch (err) { console.error('Error submitting RSVP:', err); }
+});
 
-  loadRSVPs();
-  loadMeetingInfo();
-  setInterval(() => { loadRSVPs(); loadMeetingInfo(); }, 5000);
+// =======================
+// Suggest & Vote Section (fixed, foolproof)
+// =======================
+const suggestForm = document.getElementById('suggestForm');
+const suggestTableBody = document.querySelector('#suggestions-table tbody');
 
-  rsvpForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const name = this.name.value.trim();
-    const bringing = this.bringing.value.trim();
-    if (!name || !bringing) return;
-    try {
-      await fetch('/.netlify/functions/addRSVP', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, bringing })
-      });
-      this.reset();
-      loadRSVPs();
-    } catch (err) {
-      console.error('Error submitting RSVP:', err);
+async function loadSuggestions() {
+  try {
+    const suggestions = await fetch('/.netlify/functions/getSuggestions').then(r => r.json());
+    suggestTableBody.innerHTML = '';
+    if (!suggestions.length) {
+      suggestTableBody.innerHTML = '<tr><td colspan="2">No suggestions yet.</td></tr>';
+      return;
     }
-  });
+    suggestions.forEach(s => {
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${s.name}</td><td>${s.book}</td>`;
+      suggestTableBody.appendChild(row);
+    });
+  } catch(e) { console.error('Error loading suggestions:', e); }
+}
 
-  // =======================
-  // Suggest & Vote Section
-  // =======================
-  const suggestForm = document.getElementById('suggestForm');
-  const suggestionsList = document.getElementById('suggestions-list');
-  const suggestStatus = document.getElementById('suggest-status');
+suggestForm.addEventListener('submit', async e => {
+  e.preventDefault(); // STOP page reload
+  const name = suggestForm.name.value.trim();
+  const book = suggestForm.book.value.trim();
+  if (!name || !book) return alert('Please enter both name and book suggestion.');
+  console.log('Submitting suggestion:', { name, book });
 
-  if (suggestForm && suggestionsList && suggestStatus) {
-
-    async function loadSuggestions() {
-      try {
-        const data = await fetch('/.netlify/functions/getSuggestions').then(r => r.json());
-        suggestionsList.innerHTML = '';
-        if (!data || !data.length) {
-          suggestionsList.innerHTML = '<li>No suggestions yet.</li>';
-          return;
-        }
-        data.reverse().forEach(entry => {
-          const li = document.createElement('li');
-          li.textContent = `${entry.name}: ${entry.book}`;
-          suggestionsList.appendChild(li);
-        });
-      } catch (err) {
-        console.error('Error loading suggestions:', err);
-        suggestionsList.innerHTML = '<li>Error loading suggestions.</li>';
-      }
-    }
-
+  try {
+    await fetch('/.netlify/functions/addSuggestion', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, book })
+    });
+    suggestForm.reset();
     loadSuggestions();
-    setInterval(loadSuggestions, 5000);
+    alert('Suggestion submitted!');
+  } catch (err) {
+    console.error('Error submitting suggestion:', err);
+    alert('Failed to submit suggestion. Try again.');
+  }
+});
 
-    suggestForm.addEventListener('submit', async e => {
-      e.preventDefault();
-      const name = suggestForm.name.value?.trim();
-      const book = suggestForm.book.value?.trim();
-      if (!name || !book) {
-        suggestStatus.textContent = 'Please fill out both fields!';
-        suggestStatus.style.color = 'red';
-        return;
-      }
+loadSuggestions();
+setInterval(loadSuggestions, 5000);
 
-      suggestStatus.textContent = 'Submitting...';
-      suggestStatus.style.color = '#4c1033';
+// =======================
+// Rate Our Books
+// =======================
+const bookSelect = document.getElementById('book');
+const statusDiv = document.getElementById('status');
+const avgTableBody = document.querySelector('#averages tbody');
 
-      try {
-        await fetch('/.netlify/functions/addSuggestion', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, book })
-        });
-        suggestStatus.textContent = 'Submitted!';
-        suggestStatus.style.color = 'green';
-        suggestForm.reset();
-        loadSuggestions();
-      } catch (err) {
-        console.error('Error submitting suggestion:', err);
-        suggestStatus.textContent = 'Error submitting suggestion!';
-        suggestStatus.style.color = 'red';
-      }
+async function populateBooks() {
+  try {
+    const books = await fetch('/.netlify/functions/getBookList').then(r => r.json());
+    bookSelect.innerHTML = '';
+    if (!books.length) {
+      bookSelect.innerHTML = '<option value="">No books available</option>';
+      return;
+    }
+    books.forEach(book => {
+      const bookName = typeof book === 'string' ? book.trim() : '';
+      if (!bookName) return;
+      const option = document.createElement('option');
+      option.value = bookName;
+      option.textContent = bookName;
+      bookSelect.add(option);
     });
-  }
+    refreshAverages();
+  } catch(e) { console.error('Error loading book list:', e); }
+}
 
-  // =======================
-  // Rate Our Books Section
-  // =======================
-  const bookSelect = document.getElementById('book');
-  const statusDiv = document.getElementById('status');
-  const avgTableBody = document.querySelector('#averages tbody');
-
-  async function populateBooks() {
-    try {
-      const books = await fetch('/.netlify/functions/getBookList').then(r => r.json());
-      bookSelect.innerHTML = '';
-
-      if (!books || !books.length) {
-        const option = document.createElement('option');
-        option.textContent = 'No books available';
-        option.value = '';
-        bookSelect.add(option);
-        return;
-      }
-
-      books.forEach(book => {
-        const bookName = (typeof book === 'string') ? book.trim() : '';
-        if (!bookName) return;
-        const option = document.createElement('option');
-        option.value = bookName;
-        option.textContent = bookName;
-        bookSelect.add(option);
-      });
-
-      refreshAverages();
-    } catch (e) {
-      console.error('Error loading book list:', e);
-      bookSelect.innerHTML = '<option value="">Error loading books</option>';
-    }
-  }
-
-  async function refreshAverages() {
-    try {
-      const averages = await fetch('/.netlify/functions/getAverages').then(r => r.json());
-      avgTableBody.innerHTML = '';
-
-      if (!averages || !averages.length) {
-        avgTableBody.innerHTML = '<tr><td colspan="3">No ratings yet.</td></tr>';
-        return;
-      }
-
-      averages.sort((a, b) => (b.avg || 0) - (a.avg || 0));
-
-      averages.forEach(item => {
-        const row = document.createElement('tr');
-
-        const bookCell = document.createElement('td');
-        bookCell.textContent = item.book || '(unknown)';
-
-        const avgCell = document.createElement('td');
-        const stars = Math.round(item.avg || 0);
-        avgCell.innerHTML = '⭐'.repeat(stars);
-
-        const countCell = document.createElement('td');
-        countCell.textContent = item.count || 0;
-
-        row.appendChild(bookCell);
-        row.appendChild(avgCell);
-        row.appendChild(countCell);
-
-        avgTableBody.appendChild(row);
-      });
-    } catch (e) {
-      console.error('Error loading averages:', e);
-      avgTableBody.innerHTML = '<tr><td colspan="3">Error loading averages.</td></tr>';
-    }
-  }
-
-  document.getElementById('ratingForm').addEventListener('submit', async e => {
-    e.preventDefault();
-
-    const selectedRating = document.querySelector('input[name="rating"]:checked')?.value;
-    const selectedBook = bookSelect.value;
-
-    if (!selectedBook) {
-      statusDiv.innerText = 'Please select a book!';
-      statusDiv.style.color = 'red';
+async function refreshAverages() {
+  try {
+    const averages = await fetch('/.netlify/functions/getAverages').then(r => r.json());
+    avgTableBody.innerHTML = '';
+    if (!averages.length) {
+      avgTableBody.innerHTML = '<tr><td colspan="3">No ratings yet.</td></tr>';
       return;
     }
+    averages.sort((a,b)=> (b.avg||0)-(a.avg||0));
+    averages.forEach(item => {
+      const stars = '⭐'.repeat(Math.round(item.avg||0));
+      avgTableBody.innerHTML += `<tr><td>${item.book||'(unknown)'}</td><td>${stars}</td><td>${item.count||0}</td></tr>`;
+    });
+  } catch(e) { console.error('Error loading averages:', e); }
+}
 
-    if (!selectedRating) {
-      statusDiv.innerText = 'Please select a star rating!';
-      statusDiv.style.color = 'red';
-      return;
-    }
+document.getElementById('ratingForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const selectedRating = document.querySelector('input[name="rating"]:checked')?.value;
+  const selectedBook = bookSelect.value;
+  if (!selectedBook) { statusDiv.innerText='Please select a book!'; statusDiv.style.color='red'; return; }
+  if (!selectedRating) { statusDiv.innerText='Please select a star rating!'; statusDiv.style.color='red'; return; }
+  statusDiv.innerText='Submitting rating…'; statusDiv.style.color='#4c1033';
+  try {
+    await fetch('/.netlify/functions/submitRating', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({book:selectedBook, rating:selectedRating})
+    });
+    statusDiv.innerText='Rating submitted!'; statusDiv.style.color='green';
+    document.querySelectorAll('input[name="rating"]').forEach(i=>i.checked=false);
+    refreshAverages();
+  } catch(e) { console.error('Error submitting rating:', e); statusDiv.innerText='Error submitting rating!'; statusDiv.style.color='red'; }
+});
 
-    statusDiv.innerText = 'Submitting rating…';
-    statusDiv.style.color = '#4c1033';
+populateBooks();
 
-    try {
-      await fetch('/.netlify/functions/submitRating', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ book: selectedBook, rating: selectedRating })
-      });
+// =======================
+// Past Books Carousel
+// =======================
+(async function initPastBooksCarousel() {
+  const track = document.querySelector('.carousel-track');
+  const trackWrapper = document.querySelector('.carousel-track-wrapper');
+  if (!track || !trackWrapper) return;
 
-      statusDiv.innerText = 'Rating submitted!';
-      statusDiv.style.color = 'green';
-      document.querySelectorAll('input[name="rating"]').forEach(input => input.checked = false);
-      refreshAverages();
-    } catch (e) {
-      console.error('Error submitting rating:', e);
-      statusDiv.innerText = 'Error submitting rating!';
-      statusDiv.style.color = 'red';
-    }
+  const PLACEHOLDER = 'https://raw.githubusercontent.com/tiaxcrystal/gracesbookclub/main/images/favicon.png';
+
+  let items = [];
+  try {
+    const resp = await fetch('/.netlify/functions/getPastBooks');
+    if (!resp.ok) throw new Error('Failed to fetch past books: ' + resp.status);
+    items = await resp.json();
+  } catch(err) { console.error('Could not load past books', err); track.innerHTML='<li style="padding:20px;">Could not load past books.</li>'; return; }
+
+  if (!items.length) { track.innerHTML='<li style="padding:20px;">No past books yet.</li>'; return; }
+  track.innerHTML='';
+
+  items.forEach((it,idx)=>{
+    const li=document.createElement('li');
+    li.className='carousel-slide';
+    li.setAttribute('data-index', idx);
+    li.style.boxSizing='border-box';
+    const imgUrl = Object.values(it).find(v=>typeof v==='string' && v.match(/^https?:\/\/.*\.(png|jpg|jpeg|gif)$/i)) || PLACEHOLDER;
+    const goodreadsHref = it.link?.trim() || '#';
+    const imgWrap=document.createElement('a');
+    imgWrap.href=goodreadsHref; imgWrap.target='_blank'; imgWrap.rel='noopener noreferrer';
+    const img=document.createElement('img');
+    img.src=imgUrl; img.alt=it.title?`${it.title} cover`:'Book cover';
+    img.style.width='100%'; img.style.height='100%'; img.style.objectFit='contain'; img.style.display='block'; img.style.background='#fff';
+    imgWrap.appendChild(img);
+    const caption=document.createElement('div'); caption.className='carousel-caption';
+    const titleLink=document.createElement('a'); titleLink.className='title-link'; titleLink.href=goodreadsHref; titleLink.target='_blank'; titleLink.rel='noopener noreferrer'; titleLink.textContent=it.title||'(no title)';
+    caption.appendChild(titleLink);
+    if(it.month){ const monthSpan=document.createElement('span'); monthSpan.className='month'; monthSpan.textContent=it.month; caption.appendChild(monthSpan); }
+    const imgContainer=document.createElement('div'); imgContainer.className='carousel-image-container'; imgContainer.style.boxSizing='border-box'; imgContainer.appendChild(imgWrap);
+    li.appendChild(imgContainer); li.appendChild(caption); track.appendChild(li);
   });
 
-  populateBooks();
+  const oldPrev=document.querySelector('.carousel-btn.prev'); if(oldPrev) oldPrev.remove();
+  const oldNext=document.querySelector('.carousel-btn.next'); if(oldNext) oldNext.remove();
 
-  // =======================
-  // Past Books Carousel Section
-  // =======================
-  (async function initPastBooksCarousel() {
-    const track = document.querySelector('.carousel-track');
-    const trackWrapper = document.querySelector('.carousel-track-wrapper');
-    if (!track || !trackWrapper) return;
+  let controlsBar=document.querySelector('.carousel-controls');
+  if(!controlsBar){ controlsBar=document.createElement('div'); controlsBar.className='carousel-controls'; trackWrapper.insertAdjacentElement('afterend',controlsBar);}
+  else controlsBar.innerHTML='';
 
-    const PLACEHOLDER = 'https://raw.githubusercontent.com/tiaxcrystal/gracesbookclub/main/images/favicon.png';
+  const prevBtn=document.createElement('button'); prevBtn.className='carousel-btn prev'; prevBtn.type='button'; prevBtn.setAttribute('aria-label','Previous book'); prevBtn.textContent='◀';
+  const nextBtn=document.createElement('button'); nextBtn.className='carousel-btn next'; nextBtn.type='button'; nextBtn.setAttribute('aria-label','Next book'); nextBtn.textContent='▶';
+  controlsBar.appendChild(prevBtn); controlsBar.appendChild(nextBtn);
 
-    let items = [];
-    try {
-      const resp = await fetch('/.netlify/functions/getPastBooks');
-      if (!resp.ok) throw new Error('Failed to fetch past books: ' + resp.status);
-      items = await resp.json();
-    } catch (err) {
-      console.error('Could not load past books', err);
-      track.innerHTML = '<li style="padding:20px;">Could not load past books.</li>';
-      return;
-    }
+  const slides=Array.from(track.children); let slideIndex=0;
+  function getGap(){ const computed=getComputedStyle(track).gap; const parsed=parseFloat(computed); return (isFinite(parsed)?parsed:12);}
+  function setSizes(){ const wrapperWidth=trackWrapper.clientWidth; slides.forEach(slide=>{ slide.style.width=wrapperWidth+'px'; slide.style.minWidth=wrapperWidth+'px'; slide.style.maxWidth=wrapperWidth+'px'; const imgContainer=slide.querySelector('.carousel-image-container'); if(imgContainer) imgContainer.style.height=wrapperWidth+'px';}); updateTrackPosition();}
+  function updateTrackPosition(){ const wrapperWidth=trackWrapper.clientWidth; const gap=getGap(); const stride=wrapperWidth+gap; const offset=slideIndex*stride; track.style.transform=`translateX(-${offset}px)`; prevBtn.disabled=(slideIndex===0); nextBtn.disabled=(slideIndex>=slides.length-1);}
+  function nextSlide(){if(slideIndex<slides.length-1){slideIndex++;updateTrackPosition();}}
+  function prevSlide(){if(slideIndex>0){slideIndex--;updateTrackPosition();}}
+  prevBtn.addEventListener('click',prevSlide); nextBtn.addEventListener('click',nextSlide);
+  document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')prevSlide();if(e.key==='ArrowRight')nextSlide();});
 
-    if (!items || !items.length) {
-      track.innerHTML = '<li style="padding:20px;">No past books yet.</li>';
-      return;
-    }
-
-    track.innerHTML = '';
-
-    items.forEach((it, idx) => {
-      const li = document.createElement('li');
-      li.className = 'carousel-slide';
-      li.setAttribute('data-index', idx);
-      li.style.boxSizing = 'border-box';
-
-      let imgUrl = '';
-      for (const key in it) {
-        if (typeof it[key] === 'string' && it[key].trim().match(/^https?:\/\/.*\.(png|jpg|jpeg|gif)$/i)) {
-          imgUrl = it[key].trim();
-          break;
-        }
-      }
-      const finalImgSrc = imgUrl || PLACEHOLDER;
-
-      const goodreadsHref = (it.link && it.link.trim()) ? it.link.trim() : '#';
-      const imgWrap = document.createElement('a');
-      imgWrap.href = goodreadsHref;
-      imgWrap.target = '_blank';
-      imgWrap.rel = 'noopener noreferrer';
-
-      const img = document.createElement('img');
-      img.src = finalImgSrc;
-      img.alt = it.title ? `${it.title} cover` : 'Book cover';
-      img.loading = 'lazy';
-      img.style.width = '100%';
-      img.style.height = '100%';
-      img.style.objectFit = 'contain';
-      img.style.display = 'block';
-      img.style.background = '#fff';
-
-      img.addEventListener('error', () => {
-        if (img.src !== PLACEHOLDER) {
-          console.warn('Book image failed to load, swapping to placeholder:', imgUrl || '(empty)');
-          img.src = PLACEHOLDER;
-        }
-      });
-
-      imgWrap.appendChild(img);
-
-      const caption = document.createElement('div');
-      caption.className = 'carousel-caption';
-      const titleLink = document.createElement('a');
-      titleLink.className = 'title-link';
-      titleLink.href = goodreadsHref;
-      titleLink.target = '_blank';
-      titleLink.rel = 'noopener noreferrer';
-      titleLink.textContent = it.title || '(no title)';
-      caption.appendChild(titleLink);
-      if (it.month) {
-        const monthSpan = document.createElement('span');
-        monthSpan.className = 'month';
-        monthSpan.textContent = it.month;
-        caption.appendChild(monthSpan);
-      }
-
-      const imgContainer = document.createElement('div');
-      imgContainer.className = 'carousel-image-container';
-      imgContainer.style.boxSizing = 'border-box';
-      imgContainer.appendChild(imgWrap);
-
-      li.appendChild(imgContainer);
-      li.appendChild(caption);
-      track.appendChild(li);
-    });
-
-    const oldPrev = document.querySelector('.carousel-btn.prev');
-    const oldNext = document.querySelector('.carousel-btn.next');
-    if (oldPrev) oldPrev.remove();
-    if (oldNext) oldNext.remove();
-
-    let controlsBar = document.querySelector('.carousel-controls');
-    if (!controlsBar) {
-      controlsBar = document.createElement('div');
-      controlsBar.className = 'carousel-controls';
-      trackWrapper.insertAdjacentElement('afterend', controlsBar);
-    } else controlsBar.innerHTML = '';
-
-    const prevBtn = document.createElement('button');
-    prevBtn.className = 'carousel-btn prev';
-    prevBtn.type = 'button';
-    prevBtn.setAttribute('aria-label', 'Previous book');
-    prevBtn.textContent = '◀';
-
-    const nextBtn = document.createElement('button');
-    nextBtn.className = 'carousel-btn next';
-    nextBtn.type = 'button';
-    nextBtn.setAttribute('aria-label', 'Next book');
-    nextBtn.textContent = '▶';
-
-    controlsBar.appendChild(prevBtn);
-    controlsBar.appendChild(nextBtn);
-
-    const slides = Array.from(track.children);
-    let slideIndex = 0;
-
-    function getGap() {
-      const computed = getComputedStyle(track).gap;
-      const parsed = parseFloat(computed);
-      return (isFinite(parsed) ? parsed : 12);
-    }
-
-    function setSizes() {
-      const wrapperWidth = trackWrapper.clientWidth;
-      slides.forEach(slide => {
-        slide.style.width = wrapperWidth + 'px';
-        slide.style.minWidth = wrapperWidth + 'px';
-        slide.style.maxWidth = wrapperWidth + 'px';
-        const imgContainer = slide.querySelector('.carousel-image-container');
-        if (imgContainer) imgContainer.style.height = wrapperWidth + 'px';
-      });
-      updateTrackPosition();
-    }
-
-    function updateTrackPosition() {
-      const wrapperWidth = trackWrapper.clientWidth;
-      const gap = getGap();
-      const stride = wrapperWidth + gap;
-      const offset = slideIndex * stride;
-      track.style.transform = `translateX(-${offset}px)`;
-      prevBtn.disabled = (slideIndex === 0);
-      nextBtn.disabled = (slideIndex >= slides.length - 1);
-    }
-
-    function nextSlide() { if (slideIndex < slides.length - 1) { slideIndex++; updateTrackPosition(); } }
-    function prevSlide() { if (slideIndex > 0) { slideIndex--; updateTrackPosition(); } }
-
-    prevBtn.addEventListener('click', prevSlide);
-    nextBtn.addEventListener('click', nextSlide);
-
-    document.addEventListener('keydown', e => { if (e.key === 'ArrowLeft') prevSlide(); if (e.key === 'ArrowRight') nextSlide(); });
-
-    let imagesToLoad = slides.length;
-    let imagesSeen = 0;
-    slides.forEach(slide => {
-      const img = slide.querySelector('img');
-      if (!img) { imagesSeen++; return; }
-      if (img.complete) { imagesSeen++; }
-      else { img.addEventListener('load', () => { imagesSeen++; }); img.addEventListener('error', () => { imagesSeen++; }); }
-    });
-
-    function finalizeLayout() {
-      setSizes();
-      const timeout = setTimeout(() => setSizes(), 300);
-      const interval = setInterval(() => {
-        if (imagesSeen >= imagesToLoad) { clearInterval(interval); clearTimeout(timeout); setSizes(); }
-      }, 100);
-    }
-    finalizeLayout();
-
-    let resizeTimer = null;
-    window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { setSizes(); }, 120); });
-
-    updateTrackPosition();
-
-  })(); // End of Past Books Carousel
-
-}); // End of DOMContentLoaded
+  let imagesToLoad=slides.length, imagesSeen=0;
+  slides.forEach(slide=>{ const img=slide.querySelector('img'); if(!img){imagesSeen++;return;} if(img.complete){imagesSeen++;} else {img.addEventListener('load',()=>{imagesSeen++;}); img.addEventListener('error',()=>{imagesSeen++;});}});
+  function finalizeLayout(){ setSizes(); const timeout=setTimeout(()=>setSizes(),300); const interval=setInterval(()=>{ if(imagesSeen>=imagesToLoad){ clearInterval(interval); clearTimeout(timeout); setSizes();}},100);}
+  finalizeLayout();
+  let resizeTimer=null; window.addEventListener('resize',()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{setSizes();},120);});
+  updateTrackPosition();
+})();
 </script>
 
 
