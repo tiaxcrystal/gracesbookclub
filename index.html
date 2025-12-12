@@ -24,22 +24,24 @@
 
   <!-- Past Books carousel -->
 <section id="past-books" class="past-books-section active">
-  <h2>What We're Reading</h2><center>Scroll to view our previous reads.</center>
-  <div class="carousel" aria-roledescription="carousel">
-    <button class="carousel-btn prev" aria-label="Previous book">◀</button>
+  <h2>What We're Reading</h2>
+  <center>Scroll to view our previous reads.</center>
 
+  <div class="carousel" aria-roledescription="carousel">
     <div class="carousel-track-wrapper">
       <ul class="carousel-track" aria-live="polite"></ul>
     </div>
 
-    <button class="carousel-btn next" aria-label="Next book">▶</button>
-  </div>
-
-  <div class="carousel-controls">
-    <button id="carousel-play" class="small-btn" aria-pressed="false">Play</button>
-    <button id="carousel-pause" class="small-btn" aria-pressed="true" style="display:none">Pause</button>
+    <!-- Side-by-side navigation buttons -->
+    <div class="carousel-controls">
+      <button class="carousel-btn prev" aria-label="Previous book">◀</button>
+      <button class="carousel-btn next" aria-label="Next book">▶</button>
+      <button id="carousel-play" class="small-btn" aria-pressed="false">Play</button>
+      <button id="carousel-pause" class="small-btn" aria-pressed="true" style="display:none">Pause</button>
+    </div>
   </div>
 </section>
+
 
 
 <!-- RSVP Container -->

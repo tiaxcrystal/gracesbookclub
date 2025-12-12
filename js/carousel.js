@@ -1,6 +1,6 @@
 // js/carousel.js
 // =======================
-// Past Books Carousel (mobile-friendly, only title clickable)
+// Past Books Carousel (mobile-friendly, swipe support with inertia and smooth slide animation)
 // =======================
 (function () {
   if (window.__GRACES_CAROUSEL_LOADED) return;
@@ -40,10 +40,7 @@
       li.setAttribute('data-index', idx);
       li.style.boxSizing = 'border-box';
 
-      const imgUrl = (it.picture && it.picture.trim()) ? it.picture.trim()
-                   : (it.pictureLink && it.pictureLink.trim()) ? it.pictureLink.trim()
-                   : (it.link && it.link.trim() && it.link.match(/\.(png|jpg|jpeg|gif)$/i) ? it.link.trim() : '');
-      const finalImgSrc = imgUrl || PLACEHOLDER;
+      const finalImgSrc = it.pictureLink?.trim() || PLACEHOLDER;
 
       const img = document.createElement('img');
       img.src = finalImgSrc;
@@ -54,18 +51,13 @@
       img.style.objectFit = 'contain';
       img.style.display = 'block';
       img.style.background = '#fff';
+      img.addEventListener('error', () => { if (img.src !== PLACEHOLDER) img.src = PLACEHOLDER; });
 
-      img.addEventListener('error', () => {
-        if (img.src !== PLACEHOLDER) img.src = PLACEHOLDER;
-      });
-
-      // image container (no <a> around image)
       const imgContainer = document.createElement('div');
       imgContainer.className = 'carousel-image-container';
       imgContainer.style.boxSizing = 'border-box';
       imgContainer.appendChild(img);
 
-      // caption with clickable title
       const caption = document.createElement('div');
       caption.className = 'carousel-caption';
       const titleLink = document.createElement('a');
@@ -88,7 +80,7 @@
       track.appendChild(li);
     });
 
-    // create controls container if missing
+    // controls
     let controlsBar = document.querySelector('.carousel-controls');
     if (!controlsBar) {
       controlsBar = document.createElement('div');
@@ -98,7 +90,6 @@
       controlsBar.innerHTML = '';
     }
 
-    // prev/next buttons
     const prevBtn = document.createElement('button');
     prevBtn.className = 'carousel-btn prev';
     prevBtn.type = 'button';
@@ -116,6 +107,8 @@
 
     const slides = Array.from(track.children);
     let slideIndex = 0;
+
+    track.style.transition = 'transform 0.35s ease'; // smooth slide
 
     function getGap() {
       const computed = getComputedStyle(track).gap;
@@ -151,10 +144,31 @@
     prevBtn.addEventListener('click', prevSlide);
     nextBtn.addEventListener('click', nextSlide);
 
-    // keyboard navigation
     document.addEventListener('keydown', e => {
       if (e.key === 'ArrowLeft') prevSlide();
       if (e.key === 'ArrowRight') nextSlide();
+    });
+
+    // swipe with inertia + smooth sliding
+    let startX = 0, startTime = 0;
+    trackWrapper.addEventListener('touchstart', e => {
+      startX = e.touches[0].clientX;
+      startTime = Date.now();
+    });
+
+    trackWrapper.addEventListener('touchend', e => {
+      const endX = e.changedTouches[0].clientX;
+      const deltaX = endX - startX;
+      const deltaTime = Date.now() - startTime;
+      const speed = deltaX / deltaTime;
+
+      const SWIPE_MIN_DISTANCE = 20;
+      const SWIPE_SPEED_THRESHOLD = 0.3;
+
+      if (Math.abs(deltaX) > SWIPE_MIN_DISTANCE || Math.abs(speed) > SWIPE_SPEED_THRESHOLD) {
+        if (deltaX > 0) prevSlide();
+        else nextSlide();
+      }
     });
 
     // image load tracking
@@ -183,14 +197,12 @@
     }
     finalizeLayout();
 
-    // responsive resize
     let resizeTimer = null;
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(() => { setSizes(); }, 120);
     });
 
-    // initial button state
     updateTrackPosition();
   })();
 })();
