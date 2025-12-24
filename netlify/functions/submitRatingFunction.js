@@ -1,7 +1,9 @@
 // netlify/functions/submitRatingFunction.js
-const { supabase } = require('../../supabase/supabaseClient');
+const { getSupabaseAdmin } = require('../../supabase/supabaseClient');
 
 exports.handler = async function (event) {
+  const supabaseAdmin = getSupabaseAdmin(); // runtime-safe admin client
+
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
@@ -16,7 +18,7 @@ exports.handler = async function (event) {
       };
     }
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('ratings')
       .insert([
         {
