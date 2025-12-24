@@ -1,8 +1,10 @@
 // netlify/functions/getBooksForRatingsFunction.js
-const { supabase } = require('../../supabase/supabaseClient.js');
+const { getSupabaseAdmin } = require('../../supabase/supabaseClient.js');
 
 exports.handler = async function () {
   try {
+    const supabase = getSupabaseAdmin(); // runtime-safe admin client
+
     const { data, error } = await supabase
       .from('books_meetings')
       .select('meeting_number, title')
