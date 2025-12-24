@@ -1,8 +1,10 @@
 // netlify/functions/getPastBooksFunction.js
-const { supabase } = require('../../supabase/supabaseClient.js');
+const { getSupabaseAdmin } = require('../../supabase/supabaseClient.js');
 
 exports.handler = async function () {
   try {
+    const supabase = getSupabaseAdmin(); // runtime-safe admin client
+
     // Fetch all books/meetings ordered by meeting number descending (current first)
     const { data, error } = await supabase
       .from('books_meetings')
