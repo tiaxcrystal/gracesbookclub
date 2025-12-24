@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { getSupabaseAdmin } = require('../supabaseClient');
+const { getSupabaseAdmin } = require('../supabase/supabaseClient');
 
 const MAX_VOTES = 3;
 const COOKIE_NAME = 'graces_vote_session';
