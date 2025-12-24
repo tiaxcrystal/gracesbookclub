@@ -1,12 +1,9 @@
-const { createClient } = require('@supabase/supabase-js');
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const { getSupabaseAdmin } = require('../supabaseClient');
 
 exports.handler = async (event) => {
   try {
+    const supabase = getSupabaseAdmin(); // runtime-safe admin client
+
     if (event.httpMethod !== 'POST') {
       return {
         statusCode: 405,
