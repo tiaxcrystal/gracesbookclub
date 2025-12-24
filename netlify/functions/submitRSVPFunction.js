@@ -1,7 +1,9 @@
 // netlify/functions/submitRSVPFunction.js
-const { supabaseAdmin } = require('../../supabase/supabaseClient.js');
+const { getSupabaseAdmin } = require('../../supabase/supabaseClient.js');
 
 exports.handler = async function(event) {
+  const supabaseAdmin = getSupabaseAdmin(); // runtime-safe admin client
+
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
