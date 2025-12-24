@@ -1,10 +1,5 @@
-const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const { getSupabaseAdmin } = require('../supabaseClient');
 
 const MAX_VOTES = 3;
 const COOKIE_NAME = 'graces_vote_session';
@@ -33,6 +28,8 @@ function createSessionId() {
 
 exports.handler = async (event) => {
   try {
+    const supabase = getSupabaseAdmin(); // runtime-safe admin client
+
     if (event.httpMethod !== 'POST') {
       return {
         statusCode: 405,
