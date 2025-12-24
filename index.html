@@ -9,40 +9,41 @@
 <link rel="icon" href="https://raw.githubusercontent.com/tiaxcrystal/gracesbookclub/main/images/favicon.png" type="image/png">
 
 <link rel="stylesheet" href="css/style.css">
-
 </head>
-<body><div class="header-container">
+<body>
 
-<center><img src="https://raw.githubusercontent.com/tiaxcrystal/gracesbookclub/main/images/title.png" alt="Grace's Book Club" class="title-image"></center></div>
-  
+<div class="header-container">
+  <center>
+    <img src="https://raw.githubusercontent.com/tiaxcrystal/gracesbookclub/main/images/title.png" alt="Grace's Book Club" class="title-image">
+  </center>
+</div>
+
 <div class="nav-bar">
   <button data-target="past-books">Home</button>
   <button data-target="rsvp">RSVP</button>
   <button data-target="suggest">Suggest & Vote</button>
-  <button data-target="rate">Rate Our Books</button><BR><BR>
+  <button data-target="rate">Rate Our Books</button>
+  <br><br>
 </div>
 
-  <!-- Past Books carousel -->
+<!-- Past Books carousel -->
 <section id="past-books" class="past-books-section active">
   <h2>What We're Reading</h2>
-  <center>Scroll to view our previous reads.</center>
 
   <div class="carousel" aria-roledescription="carousel">
     <div class="carousel-track-wrapper">
       <ul class="carousel-track" aria-live="polite"></ul>
     </div>
 
+    <center>Scroll to view our previous reads.</center>
+
     <!-- Side-by-side navigation buttons -->
     <div class="carousel-controls">
       <button class="carousel-btn prev" aria-label="Previous book">◀</button>
       <button class="carousel-btn next" aria-label="Next book">▶</button>
-      <button id="carousel-play" class="small-btn" aria-pressed="false">Play</button>
-      <button id="carousel-pause" class="small-btn" aria-pressed="true" style="display:none">Pause</button>
     </div>
   </div>
 </section>
-
-
 
 <!-- RSVP Container -->
 <div id="rsvp" class="container">
@@ -52,16 +53,19 @@
     <input type="text" name="bringing" placeholder="What are you bringing?" required><br>
     <button type="submit" class="submit-btn">Submit</button>
   </form>
+
+<p id="rsvp-message" class="note" style="color: green; display: none;"></p>
+
   <div class="divider"></div>
 
-  <h2>Our Next Meeting</h2>
+  <h2>Meeting Info</h2>
   <p id="meeting-date" class="note"></p>
-   <p class="note">Time: 6:15 p.m.</p>
-   <p class="note">Location: Grace's House</p>
-  <p id="meeting-theme" class="note"></p>
- 
+  <p class="note">Time: 6:15 p.m.</p>
+  <p class="note">Location: Grace's House</p>
+  <p id="meeting-theme" class="note"></p><br>
   
-  
+<p id="meeting-info" class="meeting-info"></p>
+
   <table id="rsvp-table">
     <thead>
       <tr><th>Name</th><th>Bringing</th></tr>
@@ -71,42 +75,52 @@
 </div>
 
 <!-- Suggest & Vote Container -->
-<div id="suggest" class="container">
+<div class="container" id="suggest">
+
   <h2>Suggest a Book</h2>
-  <form id="nomForm" novalidate>
-    <input id="title" name="title" type="text" placeholder="Title" required><br>
-    <input id="link" name="link" type="url" placeholder="Goodreads link (must start with http:// or https://)" required><br>
-    <button id="submitBtn" type="submit" class="submit-btn">Submit</button>
-    <div id="nomStatus" class="note" aria-live="polite"></div>
+  
+  <form id="suggest-book-form">
+    <div class="form-group">
+     
+      <input type="text" id="bookTitle" name="title" placeholder="Book title" required>
+    </div>
+    
+    <div class="form-group">
+      
+      <input type="url" id="bookLink" name="goodreads" placeholder="Goodreads link (full URL including https://)" required pattern="https?://.*">
+    </div>
+    
+    <button type="submit" class="submit-btn">Submit</button>
+    <div id="suggest-message" class="note" style="margin-top:10px; display:none;"></div>
   </form>
 
   <div class="divider"></div>
 
   <h2>Potential Next Reads</h2>
-  <p id="voteNotice" class="note">You have <span id="votesLeft">3</span> votes remaining.</p>
- 
-  
-  
-  <table id="nomsTable" aria-live="polite" class="suggested-books-table">
-  <thead>
-    <tr>
-      <th>Title</th>
-      <th colspan="2">Vote</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
-</div>
+  <p id="voteNotice" class="note">
+    You have <span id="votesLeft">3</span> votes remaining.
+  </p>
 
+  <table id="nomsTable" aria-live="polite" class="suggested-books-table">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th colspan="2">Vote</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+</div>
 
 <!-- Rate Our Books Container -->
 <div id="rate" class="container">
   <h2>Rate Our Books</h2>
   <form id="ratingForm">
-    <label for="book">Select Book:</label>
+    
     <select id="book" name="book"></select>
 
-    <label>Rating:</label>
+    
     <div class="stars">
       <input type="radio" id="star5" name="rating" value="5"><label for="star5">&#9733;</label>
       <input type="radio" id="star4" name="rating" value="4"><label for="star4">&#9733;</label>
@@ -118,11 +132,14 @@
     <button type="submit" class="submit-btn">Submit</button>
   </form>
   <div class="divider"></div>
+
   <h2>Our Ratings</h2>
   <div id="status" class="note"></div>
   <div id="averages">
     <table>
-      <thead><tr><th>Book</th><th>Average Rating</th><th>Number of Ratings</th></tr></thead>
+      <thead>
+        <tr><th>Book</th><th>Average Rating</th><th>Number of Ratings</th></tr>
+      </thead>
       <tbody></tbody>
     </table>
   </div>
@@ -130,9 +147,12 @@
 
 
 <script src="js/main.js" defer></script>
-<script src="js/suggestvote.js" defer></script>
 <script src="js/ratings.js" defer></script>
 <script src="js/carousel.js" defer></script>
+<script src="js/rsvpForm.js" defer></script>
+<script src="/js/suggest.js"></script>
 
 
-</body></html>
+</body>
+</html>
+

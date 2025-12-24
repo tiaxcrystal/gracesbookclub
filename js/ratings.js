@@ -1,61 +1,90 @@
 // =======================
-// Rate Our Books
+// Ratings
 // =======================
+
 const bookSelect = document.getElementById('book');
+const ratingForm = document.getElementById('ratingForm');
 const statusDiv = document.getElementById('status');
 const avgTableBody = document.querySelector('#averages tbody');
 
-async function populateBooks() {
+// -----------------------
+// Load books for dropdown
+// -----------------------
+async function loadBooksForDropdown(preselectedBookNumber = null) {
   try {
-    const books = await fetch('/.netlify/functions/getBookList').then(r => r.json());
-    bookSelect.innerHTML = '';
+    const res = await fetch('/.netlify/functions/getBooksForRatingsFunction');
+    if (!res.ok) throw new Error('Failed to fetch books');
 
-    if (!books || !books.length) {
-      const option = document.createElement('option');
-      option.textContent = 'No books available';
-      option.value = '';
-      bookSelect.add(option);
-      return;
-    }
+    const books = await res.json();
+
+    bookSelect.innerHTML = '<option value="">Select a book</option>';
 
     books.forEach(book => {
-      const bookName = (typeof book === 'string') ? book.trim() : '';
-      if (!bookName) return;
       const option = document.createElement('option');
-      option.value = bookName;
-      option.textContent = bookName;
-      bookSelect.add(option);
+      option.value = book.meeting_number;
+      option.textContent = book.title;
+      if (preselectedBookNumber && Number(preselectedBookNumber) === book.meeting_number) {
+        option.selected = true;
+      }
+      bookSelect.appendChild(option);
     });
 
-    refreshAverages();
-  } catch (e) {
-    console.error('Error loading book list:', e);
-    bookSelect.innerHTML = '<option value="">Error loading books</option>';
+  } catch (err) {
+    console.error('Error loading books for dropdown:', err);
+    statusDiv.textContent = 'Error loading book list.';
   }
 }
 
-async function refreshAverages() {
+// -----------------------
+// Load averages table
+// -----------------------
+async function loadAverages() {
   try {
-    const averages = await fetch('/.netlify/functions/getAverages').then(r => r.json());
+    const res = await fetch('/.netlify/functions/getAveragesFunction');
+    if (!res.ok) throw new Error('Failed to fetch averages');
+
+    const data = await res.json();
+
+    // Sort: highest rated first, unrated last
+    data.sort((a, b) => {
+      if (a.avg === null && b.avg !== null) return 1;
+      if (a.avg !== null && b.avg === null) return -1;
+      if (b.avg !== a.avg) return b.avg - a.avg;
+      return (b.count || 0) - (a.count || 0);
+    });
+
     avgTableBody.innerHTML = '';
 
-    if (!averages || !averages.length) {
-      avgTableBody.innerHTML = '<tr><td colspan="3">No ratings yet.</td></tr>';
+    if (!data.length) {
+      avgTableBody.innerHTML =
+        '<tr><td colspan="3">No ratings yet.</td></tr>';
       return;
     }
 
-    averages.sort((a, b) => (b.avg || 0) - (a.avg || 0));
-
-    averages.forEach(item => {
+    data.forEach(item => {
       const row = document.createElement('tr');
 
+      // Book title + Goodreads link
       const bookCell = document.createElement('td');
-      bookCell.textContent = item.book || '(unknown)';
+      if (item.url) {
+        const link = document.createElement('a');
+        link.href = item.url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = item.book;
+        link.classList.add('ratings-link');
+        bookCell.appendChild(link);
+      } else {
+        bookCell.textContent = item.book;
+      }
 
+      // Average rating stars
       const avgCell = document.createElement('td');
-      const stars = Math.round(item.avg || 0);
-      avgCell.innerHTML = '⭐'.repeat(stars);
+      avgCell.textContent = item.avg
+        ? '⭐'.repeat(Math.round(item.avg))
+        : '';
 
+      // Number of ratings
       const countCell = document.createElement('td');
       countCell.textContent = item.count || 0;
 
@@ -65,50 +94,56 @@ async function refreshAverages() {
 
       avgTableBody.appendChild(row);
     });
-  } catch (e) {
-    console.error('Error loading averages:', e);
-    avgTableBody.innerHTML = '<tr><td colspan="3">Error loading averages.</td></tr>';
+
+  } catch (err) {
+    console.error('Error loading averages:', err);
+    avgTableBody.innerHTML =
+      '<tr><td colspan="3">Error loading ratings.</td></tr>';
   }
 }
 
-document.getElementById('ratingForm').addEventListener('submit', async e => {
+// -----------------------
+// Submit rating
+// -----------------------
+ratingForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const selectedRating = document.querySelector('input[name="rating"]:checked')?.value;
-  const selectedBook = bookSelect.value;
+  const book_number = bookSelect.value;
+  const rating = ratingForm.rating.value;
 
-  if (!selectedBook) {
-    statusDiv.innerText = 'Please select a book!';
-    statusDiv.style.color = 'red';
+  if (!book_number || !rating) {
+    statusDiv.textContent = 'Please select a book and rating.';
     return;
   }
-
-  if (!selectedRating) {
-    statusDiv.innerText = 'Please select a star rating!';
-    statusDiv.style.color = 'red';
-    return;
-  }
-
-  statusDiv.innerText = 'Submitting rating…';
-  statusDiv.style.color = '#4c1033';
 
   try {
-    await fetch('/.netlify/functions/submitRating', {
+    const res = await fetch('/.netlify/functions/submitRatingFunction', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ book: selectedBook, rating: selectedRating })
+      body: JSON.stringify({
+        book_number: Number(bookSelect.value),
+        rating: Number(ratingForm.rating.value)
+      })
     });
 
-    statusDiv.innerText = 'Rating submitted!';
-    statusDiv.style.color = 'green';
-    document.querySelectorAll('input[name="rating"]').forEach(input => input.checked = false);
-    refreshAverages();
-  } catch (e) {
-    console.error('Error submitting rating:', e);
-    statusDiv.innerText = 'Error submitting rating!';
-    statusDiv.style.color = 'red';
+    if (!res.ok) throw new Error('Submit failed');
+
+    statusDiv.textContent = '⭐ Thank you for rating!';
+    ratingForm.reset();
+
+    await loadAverages();
+
+  } catch (err) {
+    console.error('Submit error:', err);
+    statusDiv.textContent = 'Failed to submit rating.';
   }
 });
 
-// Initialize
-populateBooks();
+// -----------------------
+// Init with preselection
+// -----------------------
+const urlParams = new URLSearchParams(window.location.search);
+const prebook = urlParams.get('book_number');
+
+loadBooksForDropdown(prebook);
+loadAverages();

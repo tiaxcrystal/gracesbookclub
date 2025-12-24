@@ -2,7 +2,10 @@
   "name": "gracesbookclub",
   "version": "1.0.0",
   "dependencies": {
-    "googleapis": "^122.0.0"
+    "@supabase/supabase-js": "^2.78.0",
+    "google-auth-library": "^10.5.0",
+    "googleapis": "^122.0.0",
+    "gtoken": "^8.0.0"
   },
   "engines": {
     "node": "18"

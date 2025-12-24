@@ -1,15 +1,11 @@
-/* ==============================
-   General Body & Fonts
-============================== */
-html, body {
-  margin: 0;
+/* ============================== Global Fonts (Times New Roman) ============================== */
+html, body, input:not(.stars input), select, textarea, button {
   font-family: "Times New Roman", Times, serif;
+  margin: 0;
   background-color: #fff5f8;
 }
 
-/* ==============================
-   Header & Title
-============================== */
+/* ============================== Header & Title ============================== */
 .header-container {
   background-color: white;
 }
@@ -22,7 +18,6 @@ html, body {
 
 .site-title {
   margin: 0;
-  font-family: "Times New Roman", Times, serif;
   font-size: 40px;
   color: #4c1033;
   text-align: center;
@@ -31,21 +26,12 @@ html, body {
   font-weight: 700;
 }
 
-/* ==============================
-   Navigation Bar
-============================== */
+/* ============================== Navigation Bar ============================== */
 .nav-bar-container {
   text-align: center;
   background-color: #ffffff;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
   padding: 12px 0;
-}
-
-.nav-bar-title {
-  font-size: clamp(20px, 5vw, 32px);
-  color: #4c1033;
-  margin-bottom: 8px;
-  font-weight: bold;
 }
 
 .nav-bar {
@@ -76,12 +62,12 @@ html, body {
 }
 
 @media (max-width: 500px) {
-  .nav-bar { gap: 4px; }
+  .nav-bar {
+    gap: 4px;
+  }
 }
 
-/* ==============================
-   Containers & Forms
-============================== */
+/* ============================== Containers & Forms ============================== */
 .container {
   background: white;
   padding: 25px 30px;
@@ -107,7 +93,8 @@ h2 {
 .note {
   font-size: 1.05rem;
   color: #000000;
-  margin-top: 6px;
+  margin: 2px 0;
+  line-height: 1.2;
 }
 
 input, select {
@@ -161,9 +148,7 @@ button.submit-btn:hover {
   border-radius: 2px;
 }
 
-/* ==============================
-   Tables
-============================== */
+/* ============================== Tables ============================== */
 table {
   margin: 18px auto;
   border-collapse: separate;
@@ -183,8 +168,13 @@ th {
   padding: 10px 12px;
 }
 
-th:first-child { border-top-left-radius:6px; }
-th:last-child { border-top-right-radius:6px; }
+th:first-child {
+  border-top-left-radius:6px;
+}
+
+th:last-child {
+  border-top-right-radius:6px;
+}
 
 td {
   padding: 8px 12px;
@@ -193,9 +183,17 @@ td {
   text-align: left;
 }
 
-tbody tr:nth-child(even) { background: #f2f2f2; }
-tbody tr:nth-child(odd) { background: white; }
-tbody tr:hover { background: #ffe6eb; }
+tbody tr:nth-child(even) {
+  background: #f2f2f2;
+}
+
+tbody tr:nth-child(odd) {
+  background: white;
+}
+
+tbody tr:hover {
+  background: #ffe6eb;
+}
 
 /* Suggested Books Table */
 .suggested-books-table {
@@ -211,18 +209,26 @@ tbody tr:hover { background: #ffe6eb; }
 }
 
 .suggested-books-table th:nth-child(1),
-.suggested-books-table td:nth-child(1) { width: 55%; }
+.suggested-books-table td:nth-child(1) {
+  width: 55%;
+}
+
 .suggested-books-table th:nth-child(2),
 .suggested-books-table td:nth-child(2),
 .suggested-books-table th:nth-child(3),
-.suggested-books-table td:nth-child(3) { width: 40%; text-align: center; }
+.suggested-books-table td:nth-child(3) {
+  width: 40%;
+  text-align: center;
+}
 
 .suggested-books-table a {
   color: #4c1033;
   text-decoration: none;
 }
 
-.suggested-books-table a:hover { text-decoration: underline; }
+.suggested-books-table a:hover {
+  text-decoration: underline;
+}
 
 .suggested-books-table button.vote-btn {
   background-color: #4c1033;
@@ -240,17 +246,64 @@ tbody tr:hover { background: #ffe6eb; }
   color: #666;
 }
 
-/* ==============================
-   Star Ratings
-============================== */
+#suggest-book-container input {
+  font-size: 1rem;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 12px;
+}
+
+#suggest-book-container label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 4px;
+  color: #4c1033;
+}
+
+#suggest-book-container .submit-btn {
+  background-color: #eec2cd;
+  color: black;
+  border: none;
+  cursor: pointer;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transition: all 0.2s ease;
+}
+
+#suggest-book-container .submit-btn:hover {
+  background-color: #4c1033;
+  color: white;
+}
+
+/* Highlight leading book(s) */
+.suggested-books-table tr.leader-row {
+  background-color: #f6e8ed;
+  font-weight: 600;
+}
+
+.suggested-books-table tr.leader {
+  background-color: #f6e4ec;
+  font-weight: bold;
+}
+
+
+/* ============================== Star Ratings ============================== */
 .stars {
   display: flex;
   flex-direction: row-reverse;
   justify-content: center;
   margin-top: 10px;
+  font-family: inherit; /* keep Times for stars */
 }
 
-.stars input { display: none; }
+.stars input {
+  display: none;
+}
 
 .stars label {
   font-size: 3em;
@@ -267,24 +320,212 @@ tbody tr:hover { background: #ffe6eb; }
   transform: scale(1.2);
 }
 
-/* ==============================
-   Past Books Carousel
-============================== */
-.past-books-section { display: none; width: 90%; max-width: 1000px; margin: 40px auto; color: #4c1033; }
-.past-books-section.active { display: block; }
-.past-books-section h2 { margin: 0 0 14px 0; font-size: 26pt; text-align: center; }
+/* Ratings Table Stars */
+#averages td {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 12pt; /* keep normal text size */
+  color: initial; /* normal text color */
+}
 
-.carousel { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.carousel-track-wrapper { overflow: hidden; width: 100%; border-radius: 12px; background: white; box-shadow: 0 2px 6px rgba(0,0,0,0.08); position: relative; }
-.carousel-track { display: flex; padding: 0; margin: 0; list-style: none; transition: transform 0.45s cubic-bezier(.25,.8,.25,1); gap: 12px; will-change: transform; }
-.carousel-slide { flex: 0 0 auto; display: flex; flex-direction: column; align-items: stretch; background: white; border-radius: 8px; box-sizing: border-box; overflow: visible; }
-.carousel-image-container { width: 100%; box-sizing: border-box; overflow: hidden; display: block; background: white; border-top-left-radius: 8px; border-top-right-radius: 8px; aspect-ratio: 1 / 1; }
-.carousel-slide img { width: 100%; height: 100%; object-fit: contain; display: block; background: #fff; border: none; border-radius: 0; }
-.carousel-caption { padding: 10px; text-align: center; font-size: 1.5rem; color: #4c1033; background: white; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; box-sizing: border-box; }
-.carousel-caption a.title-link { color: #4c1033; text-decoration: none; font-weight: 600; }
-.carousel-caption a.title-link:hover { text-decoration: underline; }
-.carousel-caption .month { display: block; margin-top: 6px; font-size: 1rem; color: #000000; }
-.carousel-controls { display: flex; gap: 12px; align-items: center; justify-content: center; margin-top: 8px; width: 100%; }
+#averages td span.stars-display {
+  color: gold;
+  font-size: 1.5em; /* only stars are bigger */
+}
+
+/* Animated star fill */
+.avg-stars {
+  display: inline-block;
+  color: gold;
+  font-size: 1.25rem;
+  position: relative;
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.avg-stars::before {
+  content: '★★★★★';
+  color: #ccc; /* empty stars */
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.avg-stars::after {
+  content: '★★★★★';
+  color: gold; /* filled stars */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: width 0.6s ease-in-out; /* smooth fill */
+}
+
+
+/* ============================== Past Books Carousel ============================== */
+.past-books-section {
+  display: none;
+  width: 90%;
+  max-width: 1000px;
+  margin: 40px auto;
+  color: #4c1033;
+}
+
+.past-books-section.active {
+  display: block;
+}
+
+.past-books-section h2 {
+  margin: 0 0 14px 0;
+  font-size: 26pt;
+  text-align: center;
+}
+
+.carousel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.carousel-track-wrapper {
+  overflow: hidden;
+  width: 100%;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  position: relative;
+}
+
+.carousel-track {
+  display: flex;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  transition: transform 0.45s cubic-bezier(.25,.8,.25,1);
+  gap: 12px;
+  will-change: transform;
+  scroll-snap-type: x mandatory;
+}
+
+.carousel-slide {
+  flex: 0 0 clamp(160px, 22vw, 220px);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: white;
+  border-radius: 8px;
+  box-sizing: border-box;
+  overflow: visible;
+  scroll-snap-align: start;
+}
+
+.carousel-image-container {
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  display: block;
+  background: white;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  aspect-ratio: 1 / 1;
+}
+
+.carousel-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  background: #fff;
+  border: none;
+  border-radius: 0;
+}
+
+.carousel-caption {
+  padding: 10px;
+  text-align: center;
+  font-size: 1.5rem;
+  color: #4c1033;
+  background: white;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+}
+
+.carousel-caption a.title-link {
+  color: #4c1033;
+  text-decoration: none;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.carousel-caption a.title-link:hover {
+  text-decoration: underline;
+}
+
+/* Author row */
+.carousel-caption .author {
+  font-size: 1rem;
+  color: #000;
+  margin-top: 2px;
+  display: block;
+}
+
+/* Meeting date row */
+.carousel-caption .meeting-date {
+  font-size: 1rem;
+  color: #000;
+  margin-top: 2px;
+  display: block;
+}
+
+/* ============================== Carousel Stars Row ============================== */
+.carousel-caption .carousel-stars-row a {
+  text-decoration: none !important;  /* remove underline completely */
+  transition: color 0.2s ease, text-decoration 0.2s ease;
+  cursor: pointer;
+}
+
+/* Stars only */
+.carousel-caption .carousel-stars-row a.star-link {
+  color: #ffcc00 !important;
+  font-size: 1.25rem;
+}
+
+.carousel-caption .carousel-stars-row a.star-link:hover {
+  color: #ffdd33 !important;
+  text-decoration: none !important;
+}
+
+/* "Be the first to rate this book" text */
+.carousel-caption .carousel-stars-row a span.first-to-rate {
+  font-size: 1rem;        /* normal text size */
+  color: #4c1033;         /* match theme */
+  text-decoration: none;
+}
+
+.carousel-caption .carousel-stars-row a span.first-to-rate:hover {
+  text-decoration: underline;
+  color: #eec2cd;         /* hover color matches theme */
+}
+
+
+/* ============================== Carousel Controls ============================== */
+.carousel-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+  width: 100%;
+}
+
 .carousel > .carousel-btn,
 .carousel-controls .carousel-btn {
   background: #eec2cd;
@@ -301,37 +542,98 @@ tbody tr:hover { background: #ffe6eb; }
   min-height: 44px;
   font-size: 1.05rem;
 }
+
 .carousel > .carousel-btn:hover,
-.carousel-controls .carousel-btn:hover { background: #4c1033; color: white; }
-.carousel-btn:disabled { background: #f0dfe2; color: #999; cursor: not-allowed; box-shadow: none; opacity: 0.9; }
+.carousel-controls .carousel-btn:hover {
+  background: #4c1033;
+  color: white;
+}
+
+.carousel-btn:disabled {
+  background: #f0dfe2;
+  color: #999;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.9;
+}
+
 .carousel-controls .small-btn,
 #carousel-play,
-#carousel-pause { display: none !important; }
+#carousel-pause {
+  display: none !important;
+}
 
 @media (max-width: 900px) {
-  .past-books-section { width: 95%; }
+  .past-books-section {
+    width: 95%;
+  }
   .carousel > .carousel-btn,
-  .carousel-controls .carousel-btn { padding: 8px 10px; min-width: 40px; min-height: 40px; }
-  .carousel-caption { font-size: 1.5rem; }
+  .carousel-controls .carousel-btn {
+    padding: 8px 10px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+  .carousel-caption {
+    font-size: 1.5rem;
+  }
 }
 
 @media (max-width: 700px) {
-  .past-books-section h2 { font-size: 20pt; }
-  .carousel-caption { font-size: 1.5rem; padding: 8px; }
+  .past-books-section h2 {
+    font-size: 20pt;
+  }
+  .carousel-caption {
+    font-size: 1.5rem;
+    padding: 8px;
+  }
   .carousel > .carousel-btn,
-  .carousel-controls .carousel-btn { padding: 6px 8px; min-width: 36px; min-height: 36px; }
+  .carousel-controls .carousel-btn {
+    padding: 6px 8px;
+    min-width: 36px;
+    min-height: 36px;
+  }
 }
 
 /* Accessibility focus outlines */
 .carousel-btn:focus,
 .small-btn:focus,
-.carousel-caption a.title-link:focus { outline: 3px solid rgba(124,16,40,0.15); outline-offset: 3px; }
+.carousel-caption a.title-link:focus {
+  outline: 3px solid rgba(124,16,40,0.15);
+  outline-offset: 3px;
+}
 
-/* ==============================
-   Responsive tweaks
-============================== */
+/* ============================== Responsive tweaks ============================== */
 @media (max-width: 700px) {
-  h2 { font-size: 24pt; }
-  input, select, button.submit-btn { font-size: 11pt; padding: 8px 16px; }
-  table, th, td { font-size: 11pt; }
+  h2 {
+    font-size: 24pt;
+  }
+  input, select, button.submit-btn {
+    font-size: 11pt;
+    padding: 8px 16px;
+  }
+  table, th, td {
+    font-size: 11pt;
+  }
+}
+
+/* ============================== Desktop carousel size control ============================== */
+@media (min-width: 900px) {
+  .carousel {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  .carousel-track-wrapper {
+    max-width: 700px;
+  }
+}
+
+/* ============================== Ratings Table Links ============================== */
+.ratings-link {
+  color: #4c1033;
+  font-weight: normal;
+  text-decoration: none;
+}
+
+.ratings-link:hover {
+  text-decoration: underline;
 }
