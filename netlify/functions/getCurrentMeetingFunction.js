@@ -1,8 +1,10 @@
-const { supabase } = require('../../supabase/supabaseClient.js');
+const { getSupabaseAdmin } = require('../../supabase/supabaseClient.js');
 
 exports.handler = async function(event) {
-console.log('SUPABASE_URL:', process.env.SUPABASE_URL);
-console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '***set***' : '***missing***');
+  const supabase = getSupabaseAdmin();
+
+  console.log('SUPABASE_URL:', process.env.SUPABASE_URL);
+  console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '***set***' : '***missing***');
 
   try {
     const { data, error } = await supabase
