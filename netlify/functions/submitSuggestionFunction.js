@@ -1,4 +1,4 @@
-const { getSupabaseAdmin } = require('../supabase/supabaseClient');
+const { getSupabaseAdmin } = require('../../supabase/supabaseClient');
 
 exports.handler = async (event) => {
   try {
