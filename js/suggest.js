@@ -6,7 +6,10 @@ const suggestForm = document.getElementById('suggest-book-form');
 
 const REFRESH_INTERVAL = 15000; // 15 seconds
 
-let currentMeetingNumber = null;
+// FIX: prevent "already declared" crash across multiple scripts
+window.currentMeetingNumber = window.currentMeetingNumber || null;
+let currentMeetingNumber = window.currentMeetingNumber;
+
 let votesRemaining = 3;
 
 /* -----------------------------
@@ -19,6 +22,7 @@ async function loadCurrentMeeting() {
 
     if (res.ok) {
       currentMeetingNumber = meeting.meeting_number;
+      window.currentMeetingNumber = meeting.meeting_number;
     } else {
       console.warn('Failed to load meeting');
     }
