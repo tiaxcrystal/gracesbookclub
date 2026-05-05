@@ -4,76 +4,57 @@ const nomsTableBody = document.querySelector('#nomsTable tbody');
 const votesLeftEl = document.getElementById('votesLeft');
 const suggestForm = document.getElementById('suggest-book-form');
 
-const VOTES_KEY = 'votesLeft';
-const COOKIE_NAME = 'graces_votes';
-const MAX_VOTES = 3;
-const COOKIE_DAYS = 20;
 const REFRESH_INTERVAL = 15000; // 15 seconds
 
-/* -----------------------------
-   Cookie helpers
------------------------------- */
-function getCookie(name) {
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-  return match ? match[2] : null;
-}
-
-function setCookie(name, value, days) {
-  const expires = new Date(
-    Date.now() + days * 24 * 60 * 60 * 1000
-  ).toUTCString();
-  document.cookie = `${name}=${value}; expires=${expires}; path=/`;
-}
+let currentMeetingNumber = null;
+let votesRemaining = 3;
 
 /* -----------------------------
-   Vote tracking (client-side)
+   Get current meeting (same idea as RSVP)
 ------------------------------ */
-function getVotesLeft() {
-  // 🔧 FIX: prevent "0 forever" / stuck state / bad initialization loop
+async function loadCurrentMeeting() {
+  try {
+    const res = await fetch('/.netlify/functions/getCurrentMeetingFunction');
+    const meeting = await res.json();
 
-  let stored = localStorage.getItem(VOTES_KEY);
-
-  // If nothing exists at all → initialize correctly
-  if (stored === null || stored === undefined) {
-    localStorage.setItem(VOTES_KEY, MAX_VOTES);
-    return MAX_VOTES;
-  }
-
-  let votes = parseInt(stored);
-
-  // If corrupted OR negative OR NaN → reset cleanly
-  if (isNaN(votes) || votes < 0) {
-    votes = MAX_VOTES;
-    localStorage.setItem(VOTES_KEY, votes);
-    return votes;
-  }
-
-  // 🔥 IMPORTANT FIX:
-  // If system is stuck at 0 with no context, allow recovery via cookie or reset
-  if (votes === 0) {
-    const cookieVotes = parseInt(getCookie(COOKIE_NAME));
-
-    // If cookie suggests this is NOT a real "0 forever state", recover
-    if (!isNaN(cookieVotes) && cookieVotes > 0) {
-      votes = cookieVotes;
-      localStorage.setItem(VOTES_KEY, votes);
-      return votes;
+    if (res.ok) {
+      currentMeetingNumber = meeting.meeting_number;
+    } else {
+      console.warn('Failed to load meeting');
     }
+  } catch (err) {
+    console.error('Error fetching meeting:', err);
   }
-
-  return votes;
 }
 
-function updateVotesLeft(votes) {
-  votesLeftEl.textContent = votes;
-  localStorage.setItem(VOTES_KEY, votes);
-  setCookie(COOKIE_NAME, votes, COOKIE_DAYS);
+/* -----------------------------
+   Get vote status (NEW SYSTEM)
+------------------------------ */
+async function getVoteStatus() {
+  if (!currentMeetingNumber) return;
+
+  try {
+    const res = await fetch(
+      `/.netlify/functions/getVoteStatusFunction?meeting_number=${currentMeetingNumber}`
+    );
+
+    const data = await res.json();
+
+    if (res.ok) {
+      votesRemaining = data.votes_remaining;
+      votesLeftEl.textContent = votesRemaining;
+    }
+  } catch (err) {
+    console.error('Error fetching vote status:', err);
+  }
 }
 
+/* -----------------------------
+   Update vote buttons
+------------------------------ */
 function updateVoteButtons() {
-  const votes = getVotesLeft();
   document.querySelectorAll('.vote-btn').forEach(btn => {
-    btn.disabled = votes <= 0;
+    btn.disabled = votesRemaining <= 0;
   });
 }
 
@@ -94,12 +75,10 @@ function renderSuggestions(data) {
   data.forEach(entry => {
     const tr = document.createElement('tr');
 
-    // Highlight leader(s)
     if (entry.votes === maxVotes && maxVotes > 0) {
       tr.classList.add('leader');
     }
 
-    // Title
     const titleTd = document.createElement('td');
     const link = document.createElement('a');
     link.href = entry.goodreads;
@@ -108,26 +87,26 @@ function renderSuggestions(data) {
     link.textContent = entry.title;
     titleTd.appendChild(link);
 
-    // Vote count
     const countTd = document.createElement('td');
     countTd.textContent = entry.votes ?? 0;
 
-    // Vote button
     const btnTd = document.createElement('td');
     const voteBtn = document.createElement('button');
     voteBtn.className = 'vote-btn';
     voteBtn.textContent = 'Vote';
-    voteBtn.disabled = getVotesLeft() <= 0;
+    voteBtn.disabled = votesRemaining <= 0;
 
     voteBtn.addEventListener('click', async () => {
-      const currentVotes = getVotesLeft();
-      if (currentVotes <= 0) return;
+      if (votesRemaining <= 0) return;
 
       try {
         const res = await fetch('/.netlify/functions/submitVoteFunction', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ uuid: entry.uuid })
+          body: JSON.stringify({
+            uuid: entry.uuid,
+            meeting_number: currentMeetingNumber
+          })
         });
 
         const result = await res.json();
@@ -137,9 +116,11 @@ function renderSuggestions(data) {
           return;
         }
 
-        updateVotesLeft(currentVotes - 1);
+        votesRemaining--;
+        votesLeftEl.textContent = votesRemaining;
         updateVoteButtons();
-        await loadSuggestions(); // refresh totals immediately
+
+        await loadSuggestions();
 
       } catch (err) {
         console.error('Vote error:', err);
@@ -164,9 +145,14 @@ function renderSuggestions(data) {
 ------------------------------ */
 async function loadSuggestions() {
   try {
-    const res = await fetch('/.netlify/functions/getSuggestionsFunction');
-    if (!res.ok) throw new Error('Failed to fetch suggestions');
+    const res = await fetch(
+      `/.netlify/functions/getSuggestionsFunction?meeting_number=${currentMeetingNumber}`
+    );
+
     const data = await res.json();
+
+    if (!res.ok) throw new Error('Failed to fetch suggestions');
+
     renderSuggestions(data);
   } catch (err) {
     console.error(err);
@@ -176,11 +162,11 @@ async function loadSuggestions() {
 }
 
 /* -----------------------------
-   Suggest-a-book form handler
+   Suggest form
 ------------------------------ */
 if (suggestForm) {
   suggestForm.addEventListener('submit', async (e) => {
-    e.preventDefault(); // 🚨 THIS stops the page refresh
+    e.preventDefault();
 
     const title = suggestForm.title.value.trim();
     const goodreads = suggestForm.goodreads.value.trim();
@@ -205,7 +191,7 @@ if (suggestForm) {
       }
 
       suggestForm.reset();
-      await loadSuggestions(); // 👈 new suggestion appears immediately
+      await loadSuggestions();
 
     } catch (err) {
       console.error('Suggestion error:', err);
@@ -215,10 +201,12 @@ if (suggestForm) {
 }
 
 /* -----------------------------
-   Init + polling
+   Init
 ------------------------------ */
-document.addEventListener('DOMContentLoaded', () => {
-  updateVotesLeft(getVotesLeft());
-  loadSuggestions();
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadCurrentMeeting();
+  await getVoteStatus();
+  await loadSuggestions();
+
   setInterval(loadSuggestions, REFRESH_INTERVAL);
 });
