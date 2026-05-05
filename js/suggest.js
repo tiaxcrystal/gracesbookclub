@@ -30,11 +30,28 @@ function setCookie(name, value, days) {
 ------------------------------ */
 function getVotesLeft() {
   let votes = parseInt(localStorage.getItem(VOTES_KEY));
+
+  // 🔧 SELF-HEALING FIX START
+  const cookieVotes = parseInt(getCookie(COOKIE_NAME));
+
+  // If localStorage is missing OR corrupted OR stuck at 0 forever
   if (isNaN(votes)) {
-    const cookieVotes = parseInt(getCookie(COOKIE_NAME));
     votes = isNaN(cookieVotes) ? MAX_VOTES : cookieVotes;
     localStorage.setItem(VOTES_KEY, votes);
   }
+
+  // 🔥 NEW: if someone is stuck at 0 (old state), restore automatically
+  if (votes <= 0) {
+    const fallback = isNaN(cookieVotes) ? MAX_VOTES : cookieVotes;
+
+    // only heal if cookie suggests they should NOT be at 0
+    if (fallback > 0) {
+      votes = fallback;
+      localStorage.setItem(VOTES_KEY, votes);
+    }
+  }
+  // 🔧 SELF-HEALING FIX END
+
   return votes;
 }
 
