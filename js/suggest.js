@@ -29,37 +29,36 @@ function setCookie(name, value, days) {
    Vote tracking (client-side)
 ------------------------------ */
 function getVotesLeft() {
-  const RESET_KEY = 'votesResetTime';
-  const RESET_DAYS = 2;
+  // 🔧 FIX: prevent "0 forever" / stuck state / bad initialization loop
 
-  const now = Date.now();
+  let stored = localStorage.getItem(VOTES_KEY);
 
-  let votes = parseInt(localStorage.getItem(VOTES_KEY));
-  let resetTime = parseInt(localStorage.getItem(RESET_KEY));
-
-  const cookieVotes = parseInt(getCookie(COOKIE_NAME));
-
-  // If reset time doesn't exist, create it
-  if (isNaN(resetTime)) {
-    resetTime = now + (RESET_DAYS * 24 * 60 * 60 * 1000);
-    localStorage.setItem(RESET_KEY, resetTime);
+  // If nothing exists at all → initialize correctly
+  if (stored === null || stored === undefined) {
+    localStorage.setItem(VOTES_KEY, MAX_VOTES);
+    return MAX_VOTES;
   }
 
-  // If expired → FULL RESET no matter what state is
-  if (now > resetTime) {
+  let votes = parseInt(stored);
+
+  // If corrupted OR negative OR NaN → reset cleanly
+  if (isNaN(votes) || votes < 0) {
     votes = MAX_VOTES;
     localStorage.setItem(VOTES_KEY, votes);
-
-    resetTime = now + (RESET_DAYS * 24 * 60 * 60 * 1000);
-    localStorage.setItem(RESET_KEY, resetTime);
-
     return votes;
   }
 
-  // If localStorage is missing or broken → fall back
-  if (isNaN(votes)) {
-    votes = isNaN(cookieVotes) ? MAX_VOTES : cookieVotes;
-    localStorage.setItem(VOTES_KEY, votes);
+  // 🔥 IMPORTANT FIX:
+  // If system is stuck at 0 with no context, allow recovery via cookie or reset
+  if (votes === 0) {
+    const cookieVotes = parseInt(getCookie(COOKIE_NAME));
+
+    // If cookie suggests this is NOT a real "0 forever state", recover
+    if (!isNaN(cookieVotes) && cookieVotes > 0) {
+      votes = cookieVotes;
+      localStorage.setItem(VOTES_KEY, votes);
+      return votes;
+    }
   }
 
   return votes;
@@ -95,10 +94,12 @@ function renderSuggestions(data) {
   data.forEach(entry => {
     const tr = document.createElement('tr');
 
+    // Highlight leader(s)
     if (entry.votes === maxVotes && maxVotes > 0) {
       tr.classList.add('leader');
     }
 
+    // Title
     const titleTd = document.createElement('td');
     const link = document.createElement('a');
     link.href = entry.goodreads;
@@ -107,9 +108,11 @@ function renderSuggestions(data) {
     link.textContent = entry.title;
     titleTd.appendChild(link);
 
+    // Vote count
     const countTd = document.createElement('td');
     countTd.textContent = entry.votes ?? 0;
 
+    // Vote button
     const btnTd = document.createElement('td');
     const voteBtn = document.createElement('button');
     voteBtn.className = 'vote-btn';
@@ -136,7 +139,7 @@ function renderSuggestions(data) {
 
         updateVotesLeft(currentVotes - 1);
         updateVoteButtons();
-        await loadSuggestions();
+        await loadSuggestions(); // refresh totals immediately
 
       } catch (err) {
         console.error('Vote error:', err);
@@ -177,7 +180,7 @@ async function loadSuggestions() {
 ------------------------------ */
 if (suggestForm) {
   suggestForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // 🚨 THIS stops the page refresh
 
     const title = suggestForm.title.value.trim();
     const goodreads = suggestForm.goodreads.value.trim();
@@ -202,7 +205,7 @@ if (suggestForm) {
       }
 
       suggestForm.reset();
-      await loadSuggestions();
+      await loadSuggestions(); // 👈 new suggestion appears immediately
 
     } catch (err) {
       console.error('Suggestion error:', err);
