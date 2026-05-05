@@ -7,7 +7,7 @@ const rsvpMessage = document.getElementById('rsvp-message');
 window.currentMeetingNumber = window.currentMeetingNumber || null;
 
 // alias for convenience (so you don’t have to rewrite rest of file)
-let currentMeetingNumber = window.currentMeetingNumber;
+var currentMeetingNumber = window.currentMeetingNumber;
 
 
 // Fetch current meeting info
