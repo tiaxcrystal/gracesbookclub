@@ -29,28 +29,38 @@ function setCookie(name, value, days) {
    Vote tracking (client-side)
 ------------------------------ */
 function getVotesLeft() {
-  let votes = parseInt(localStorage.getItem(VOTES_KEY));
+  const RESET_KEY = 'votesResetTime';
+  const RESET_DAYS = 2;
 
-  // 🔧 SELF-HEALING FIX START
+  const now = Date.now();
+
+  let votes = parseInt(localStorage.getItem(VOTES_KEY));
+  let resetTime = parseInt(localStorage.getItem(RESET_KEY));
+
   const cookieVotes = parseInt(getCookie(COOKIE_NAME));
 
-  // If localStorage is missing OR corrupted OR stuck at 0 forever
+  // If reset time doesn't exist, create it
+  if (isNaN(resetTime)) {
+    resetTime = now + (RESET_DAYS * 24 * 60 * 60 * 1000);
+    localStorage.setItem(RESET_KEY, resetTime);
+  }
+
+  // If expired → FULL RESET no matter what state is
+  if (now > resetTime) {
+    votes = MAX_VOTES;
+    localStorage.setItem(VOTES_KEY, votes);
+
+    resetTime = now + (RESET_DAYS * 24 * 60 * 60 * 1000);
+    localStorage.setItem(RESET_KEY, resetTime);
+
+    return votes;
+  }
+
+  // If localStorage is missing or broken → fall back
   if (isNaN(votes)) {
     votes = isNaN(cookieVotes) ? MAX_VOTES : cookieVotes;
     localStorage.setItem(VOTES_KEY, votes);
   }
-
-  // 🔥 NEW: if someone is stuck at 0 (old state), restore automatically
-  if (votes <= 0) {
-    const fallback = isNaN(cookieVotes) ? MAX_VOTES : cookieVotes;
-
-    // only heal if cookie suggests they should NOT be at 0
-    if (fallback > 0) {
-      votes = fallback;
-      localStorage.setItem(VOTES_KEY, votes);
-    }
-  }
-  // 🔧 SELF-HEALING FIX END
 
   return votes;
 }
@@ -85,12 +95,10 @@ function renderSuggestions(data) {
   data.forEach(entry => {
     const tr = document.createElement('tr');
 
-    // Highlight leader(s)
     if (entry.votes === maxVotes && maxVotes > 0) {
       tr.classList.add('leader');
     }
 
-    // Title
     const titleTd = document.createElement('td');
     const link = document.createElement('a');
     link.href = entry.goodreads;
@@ -99,11 +107,9 @@ function renderSuggestions(data) {
     link.textContent = entry.title;
     titleTd.appendChild(link);
 
-    // Vote count
     const countTd = document.createElement('td');
     countTd.textContent = entry.votes ?? 0;
 
-    // Vote button
     const btnTd = document.createElement('td');
     const voteBtn = document.createElement('button');
     voteBtn.className = 'vote-btn';
@@ -130,7 +136,7 @@ function renderSuggestions(data) {
 
         updateVotesLeft(currentVotes - 1);
         updateVoteButtons();
-        await loadSuggestions(); // refresh totals immediately
+        await loadSuggestions();
 
       } catch (err) {
         console.error('Vote error:', err);
@@ -171,7 +177,7 @@ async function loadSuggestions() {
 ------------------------------ */
 if (suggestForm) {
   suggestForm.addEventListener('submit', async (e) => {
-    e.preventDefault(); // 🚨 THIS stops the page refresh
+    e.preventDefault();
 
     const title = suggestForm.title.value.trim();
     const goodreads = suggestForm.goodreads.value.trim();
@@ -196,7 +202,7 @@ if (suggestForm) {
       }
 
       suggestForm.reset();
-      await loadSuggestions(); // 👈 new suggestion appears immediately
+      await loadSuggestions();
 
     } catch (err) {
       console.error('Suggestion error:', err);
