@@ -3,7 +3,12 @@ const rsvpForm = document.getElementById('rsvpForm');
 const rsvpTableBody = document.querySelector('#rsvp-table tbody');
 const rsvpMessage = document.getElementById('rsvp-message');
 
-let currentMeetingNumber = null;
+// FIX: prevent duplicate declaration crash across scripts
+window.currentMeetingNumber = window.currentMeetingNumber || null;
+
+// alias for convenience (so you don’t have to rewrite rest of file)
+let currentMeetingNumber = window.currentMeetingNumber;
+
 
 // Fetch current meeting info
 async function loadCurrentMeeting() {
@@ -13,6 +18,8 @@ async function loadCurrentMeeting() {
 
     if (res.ok) {
       currentMeetingNumber = meeting.meeting_number;
+      window.currentMeetingNumber = meeting.meeting_number;
+
       console.log('Loaded current meeting: ', meeting);
 
       // Fix: add 1 day to the meeting date to counter JS timezone issue
@@ -20,18 +27,24 @@ async function loadCurrentMeeting() {
         const meetingDate = new Date(meeting.meeting);
         meetingDate.setDate(meetingDate.getDate() + 1); // add 1 day
         const options = { month: 'long', day: 'numeric', year: 'numeric' };
-        document.getElementById('meeting-date').textContent = `Date: ${meetingDate.toLocaleDateString(undefined, options)}`;
+        document.getElementById('meeting-date').textContent =
+          `Date: ${meetingDate.toLocaleDateString(undefined, options)}`;
       }
 
-      document.getElementById('meeting-theme').textContent = meeting.theme ? `Theme: ${meeting.theme}` : '';
-      document.getElementById('meeting-info').textContent = meeting.info || '';
+      document.getElementById('meeting-theme').textContent =
+        meeting.theme ? `Theme: ${meeting.theme}` : '';
+
+      document.getElementById('meeting-info').textContent =
+        meeting.info || '';
     } else {
       console.warn('Failed to load current meeting:', meeting.error);
       currentMeetingNumber = null;
+      window.currentMeetingNumber = null;
     }
   } catch (err) {
     console.error('Error fetching current meeting:', err);
     currentMeetingNumber = null;
+    window.currentMeetingNumber = null;
   }
 }
 
@@ -74,20 +87,18 @@ async function loadRSVPs() {
   }
 }
 
+
 // Show a temporary fade-in/fade-out message
 function showRSVPMessage(text) {
   rsvpMessage.textContent = text;
   rsvpMessage.style.opacity = 0;
   rsvpMessage.style.display = 'block';
 
-  // Fade in
   let opacity = 0;
   const fadeIn = setInterval(() => {
     if (opacity >= 1) {
       clearInterval(fadeIn);
-      // Stay visible for 3 seconds
       setTimeout(() => {
-        // Fade out
         const fadeOut = setInterval(() => {
           if (opacity <= 0) {
             clearInterval(fadeOut);
@@ -102,6 +113,7 @@ function showRSVPMessage(text) {
     opacity += 0.05;
   }, 30);
 }
+
 
 // Submit RSVP
 rsvpForm.addEventListener('submit', async (e) => {
@@ -133,7 +145,7 @@ rsvpForm.addEventListener('submit', async (e) => {
 
     if (res.ok && result.success) {
       rsvpForm.reset();
-      await loadRSVPs(); // refresh table after submit
+      await loadRSVPs();
       showRSVPMessage('Thank you! Your RSVP has been received.');
     } else {
       alert(result.error || 'Failed to submit RSVP.');
@@ -143,6 +155,7 @@ rsvpForm.addEventListener('submit', async (e) => {
     alert('Error submitting RSVP.');
   }
 });
+
 
 // Initialize
 (async () => {
