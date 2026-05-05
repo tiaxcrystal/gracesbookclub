@@ -8,7 +8,6 @@ const REFRESH_INTERVAL = 15000; // 15 seconds
 
 // FIX: prevent "already declared" crash across multiple scripts
 window.currentMeetingNumber = window.currentMeetingNumber || null;
-let currentMeetingNumber = window.currentMeetingNumber;
 
 let votesRemaining = 3;
 
@@ -21,7 +20,6 @@ async function loadCurrentMeeting() {
     const meeting = await res.json();
 
     if (res.ok) {
-      currentMeetingNumber = meeting.meeting_number;
       window.currentMeetingNumber = meeting.meeting_number;
     } else {
       console.warn('Failed to load meeting');
@@ -35,11 +33,11 @@ async function loadCurrentMeeting() {
    Get vote status (NEW SYSTEM)
 ------------------------------ */
 async function getVoteStatus() {
-  if (!currentMeetingNumber) return;
+  if (!window.currentMeetingNumber) return;
 
   try {
     const res = await fetch(
-      `/.netlify/functions/getVoteStatusFunction?meeting_number=${currentMeetingNumber}`
+      `/.netlify/functions/getVoteStatusFunction?meeting_number=${window.currentMeetingNumber}`
     );
 
     const data = await res.json();
@@ -109,7 +107,7 @@ function renderSuggestions(data) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             uuid: entry.uuid,
-            meeting_number: currentMeetingNumber
+            meeting_number: window.currentMeetingNumber
           })
         });
 
@@ -150,7 +148,7 @@ function renderSuggestions(data) {
 async function loadSuggestions() {
   try {
     const res = await fetch(
-      `/.netlify/functions/getSuggestionsFunction?meeting_number=${currentMeetingNumber}`
+      `/.netlify/functions/getSuggestionsFunction?meeting_number=${window.currentMeetingNumber}`
     );
 
     const data = await res.json();
